@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#4f46e5" />
+<title>DBT Skills Diary</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22DBT%20Skills%20Diary%22%2C%22short_name%22%3A%22Diary%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23111827%22%2C%22theme_color%22%3A%22%234f46e5%22%7D" />
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --ink:#e2e8f0; --muted:#94a3b8;
+    --accent:#6366f1; --accent2:#22c55e; --line:#334155;
+    --m:#38bdf8; --i:#f472b6; --e:#fbbf24; --s:#34d399;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#111827,#0f172acc);
+    backdrop-filter:blur(8px);padding:14px 16px 10px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px}
+  .htext{flex:1;min-width:0}
+  h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.2px}
+  .date{color:var(--muted);font-size:13px;margin-top:2px}
+  .nav{flex:none;display:flex;gap:6px}
+  .nav button{background:var(--card2);border:1px solid var(--line);color:var(--ink);
+    width:38px;height:38px;border-radius:10px;font-size:18px}
+  .wrap{max-width:640px;margin:0 auto;padding:14px 12px 140px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+  .panel h2{margin:0 0 4px;font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  label.scale{display:block;margin:0 0 10px;color:var(--muted);font-size:13px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .seg button{flex:1;min-width:36px;padding:10px 0;border:1px solid var(--line);background:var(--card2);
+    color:var(--ink);border-radius:10px;font-size:15px;font-weight:600}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);padding:10px;font:inherit;resize:vertical;min-height:64px}
+  .group{margin:18px 0 6px;display:flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .group h3{margin:0;font-size:15px;font-weight:700}
+  .group .count{margin-left:auto;color:var(--muted);font-size:13px}
+  .skill{display:flex;align-items:center;gap:12px;padding:12px 12px;margin:7px 0;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;cursor:pointer;
+    transition:background .12s,border-color .12s}
+  .skill.on{background:#14321f;border-color:var(--accent2)}
+  .box{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--muted);
+    display:grid;place-items:center;font-size:15px;color:#fff;transition:.12s}
+  .skill.on .box{background:var(--accent2);border-color:var(--accent2)}
+  .skill .name{font-size:15px;font-weight:600}
+  .skill .sub{display:block;font-size:12px;color:var(--muted);font-weight:400}
+  .bar{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#0b1220ee;backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    display:flex;gap:8px;max-width:640px;margin:0 auto}
+  .bar button{flex:1;border:0;border-radius:12px;padding:14px 8px;font-size:15px;font-weight:700;color:#fff}
+  .wa{background:#25d366;color:#04331a}
+  .em{background:var(--accent)}
+  .more{background:var(--card2);color:var(--ink);flex:0 0 52px}
+  .menu{position:fixed;inset:0;z-index:30;background:#0008;display:none}
+  .menu.show{display:block}
+  .sheet{position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:16px 16px 0 0;
+    padding:10px 14px calc(20px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
+    max-height:80vh;overflow:auto}
+  .sheet button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);
+    color:var(--ink);padding:16px 4px;font-size:16px}
+  .sheet button:last-child{border-bottom:0}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#000c;color:#fff;
+    padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:60}
+  .toast.show{opacity:1}
+  .hint{color:var(--muted);font-size:12px;margin:2px 2px 0}
+  /* archive */
+  .arow{display:flex;align-items:center;gap:12px;padding:14px 12px;margin:8px 0;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;cursor:pointer}
+  .arow .ad{flex:1}
+  .arow .ad b{font-size:15px}
+  .arow .ad small{display:block;color:var(--muted);font-size:12px}
+  .pill{flex:none;background:var(--card2);border:1px solid var(--line);border-radius:20px;
+    padding:6px 10px;font-size:13px;font-weight:700}
+  .empty{color:var(--muted);text-align:center;padding:40px 10px}
+  /* lock */
+  .lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;
+    flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+  .lock.show{display:flex}
+  .lock h2{margin:0;font-weight:700}
+  .lock input{font-size:28px;letter-spacing:8px;text-align:center;width:200px;padding:12px;
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+  .lock button{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:700}
+  .lock .err{color:#f87171;font-size:14px;min-height:18px}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <h2>🔒 DBT Diary</h2>
+  <div class="hint">Enter your passcode</div>
+  <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" />
+  <div class="err" id="pinErr"></div>
+  <button onclick="tryUnlock()">Unlock</button>
+</div>
+
+<header>
+  <div class="htext">
+    <h1 id="title">DBT Skills Diary</h1>
+    <div class="date" id="dateLine"></div>
+  </div>
+  <div class="nav">
+    <button onclick="step(-1)" title="Previous day">‹</button>
+    <button onclick="step(1)" title="Next day">›</button>
+  </div>
+</header>
+
+<div class="wrap" id="dayView">
+  <div class="panel">
+    <label class="scale">How much did you use skills today? <span class="hint">(0 = not at all · 7 = used them and they helped)</span></label>
+    <div class="seg" id="useScale"></div>
+  </div>
+  <div id="skills"></div>
+  <div class="panel">
+    <h2>Notes for my therapist</h2>
+    <textarea id="notes" placeholder="Anything you want to add — urges, wins, what was hard…"></textarea>
+  </div>
+</div>
+
+<div class="wrap" id="archiveView" style="display:none">
+  <div id="archiveList"></div>
+</div>
+
+<div class="bar" id="dayBar">
+  <button class="wa" onclick="share('wa')">WhatsApp</button>
+  <button class="em" onclick="share('email')">Email</button>
+  <button class="more" onclick="openMenu()">⋯</button>
+</div>
+
+<div class="bar" id="archiveBar" style="display:none">
+  <button class="em" onclick="showDay()">← Back to entry</button>
+</div>
+
+<div class="menu" id="menu" onclick="if(event.target.id==='menu')closeMenu()">
+  <div class="sheet">
+    <button onclick="showArchive()">🗂️ View archive (all days)</button>
+    <button onclick="share('copy')">📋 Copy this day as text</button>
+    <button onclick="setTherapist()">👤 Set therapist's WhatsApp number</button>
+    <button onclick="setEmail()">✉️ Set therapist's email</button>
+    <button onclick="reminder()">⏰ Add daily reminder (download .ics)</button>
+    <button onclick="setPin()">🔑 Set / change passcode</button>
+    <button onclick="removePin()">🔓 Remove passcode</button>
+    <button onclick="exportAll()">⬇️ Export backup (all days)</button>
+    <button onclick="importAll()">⬆️ Restore from backup</button>
+    <button onclick="closeMenu()">Close</button>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept="application/json" style="display:none" />
+<div class="toast" id="toast"></div>
+
+<script>
+const GROUPS = [
+  { name:"Mindfulness", color:"var(--m)", skills:[
+    ["Wise mind",""],["Observe","just notice"],["Describe","put words on, just the facts"],
+    ["Participate","enter into the experience"],["Non-judgmental",""],["One-mindfully","present moment"],
+    ["Effectiveness","focus on what works"] ]},
+  { name:"Interpersonal Effectiveness", color:"var(--i)", skills:[
+    ["Figure out interpersonal goals",""],["DEAR","Describe, Express, Assert, Reinforce"],
+    ["MAN-Mindful","Broken Record, Ignore Attacks"],["MAN","Appear confident, Negotiate"],
+    ["GIVE","Gentle, Interested, Validate, Easy manner"],["FAST","Fair, no-Apologies, Stick to values, Truthful"],
+    ["Attend to relationships",""] ]},
+  { name:"Emotion Regulation", color:"var(--e)", skills:[
+    ["Describing emotions",""],["Check the facts",""],["Opposite-to-emotion action",""],["Problem solving",""],
+    ["Accumulate positives","positive events or valued actions"],["Build Mastery / Cope ahead",""],
+    ["PLEASE","Physical ills, Eating, Avoid drugs, Sleep, Exercise"],["Mindfulness of current emotion",""] ]},
+  { name:"Survival & Acceptance", color:"var(--s)", skills:[
+    ["STOP","Stop, Take a step back, Observe, Proceed mindfully"],
+    ["TIP","Temperature, Intense exercise, Progressive relax"],["Pros and Cons",""],
+    ["Distract / Self-soothe / Improve the moment",""],["Radical Acceptance",""],["Willingness",""],
+    ["Mindfulness of current thoughts",""],["Half-smiling",""],["Willing hands",""] ]},
+];
+
+const cfg = JSON.parse(localStorage.getItem('dbt_cfg')||'{}');
+let curKey;        // 'YYYY-MM-DD' currently shown
+let state = {};
+
+function pad(n){return String(n).padStart(2,'0');}
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+// You log the previous day, so the app opens on yesterday by default.
+function defaultKey(){return shiftKey(todayKey(),-1);}
+function keyToDate(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
+function pretty(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});}
+function prettyShort(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});}
+
+/* ---------- passcode ---------- */
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function gate(){
+  if(!cfg.pinHash){document.getElementById('lock').classList.remove('show');return;}
+  document.getElementById('lock').classList.add('show');
+  document.getElementById('pinInput').focus();
+}
+async function tryUnlock(){
+  const v=document.getElementById('pinInput').value;
+  if(await sha(v)===cfg.pinHash){document.getElementById('lock').classList.remove('show');
+    document.getElementById('pinInput').value='';}
+  else{document.getElementById('pinErr').textContent='Wrong passcode';}
+}
+document.getElementById('pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock();});
+async function setPin(){const v=prompt('Choose a passcode (digits or text):');
+  if(v){cfg.pinHash=await sha(v);localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Passcode set ✓');}closeMenu();}
+function removePin(){delete cfg.pinHash;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Passcode removed');closeMenu();}
+
+/* ---------- day load/save ---------- */
+function load(){
+  state=JSON.parse(localStorage.getItem('dbt_'+curKey)||'{}');
+  if(!state.skills)state.skills={};
+  render();
+}
+function save(){localStorage.setItem('dbt_'+curKey,JSON.stringify(state));}
+
+function render(){
+  const rel=curKey===todayKey()?'Today · ':curKey===defaultKey()?'Yesterday · ':'';
+  document.getElementById('dateLine').textContent=rel+pretty(curKey);
+  let seg='';for(let i=0;i<=7;i++)seg+=`<button class="${state.use==i?'on':''}" onclick="setUse(${i})">${i}</button>`;
+  document.getElementById('useScale').innerHTML=seg;
+  let html='';
+  GROUPS.forEach((g,gi)=>{
+    const done=g.skills.filter((_,si)=>state.skills[gi+'_'+si]).length;
+    html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
+      <h3>${g.name}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
+    g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';
+      html+=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
+        <div class="name">${s[0]}${s[1]?`<span class="sub">${s[1]}</span>`:''}</div></div>`;});
+  });
+  document.getElementById('skills').innerHTML=html;
+  document.getElementById('notes').value=state.notes||'';
+}
+function toggle(id){state.skills[id]=!state.skills[id];save();render();}
+function setUse(n){state.use=n;save();render();}
+document.getElementById('notes').addEventListener('input',e=>{state.notes=e.target.value;save();});
+function step(d){curKey=shiftKey(curKey,d);load();window.scrollTo(0,0);}
+function shiftKey(k,d){const dt=keyToDate(k);dt.setDate(dt.getDate()+d);
+  return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
+
+/* ---------- views ---------- */
+function showDay(){document.getElementById('dayView').style.display='';
+  document.getElementById('archiveView').style.display='none';
+  document.getElementById('dayBar').style.display='flex';
+  document.getElementById('archiveBar').style.display='none';
+  document.getElementById('title').textContent='DBT Skills Diary';
+  curKey=defaultKey();load();window.scrollTo(0,0);}
+function showArchive(){closeMenu();
+  document.getElementById('dayView').style.display='none';
+  document.getElementById('archiveView').style.display='';
+  document.getElementById('dayBar').style.display='none';
+  document.getElementById('archiveBar').style.display='flex';
+  document.getElementById('title').textContent='Archive';
+  document.getElementById('dateLine').textContent='All saved days';
+  const keys=Object.keys(localStorage).filter(k=>/^dbt_\d{4}-\d{2}-\d{2}$/.test(k))
+    .map(k=>k.slice(4)).sort().reverse();
+  const list=document.getElementById('archiveList');
+  if(!keys.length){list.innerHTML='<div class="empty">No days saved yet.<br>Fill out today and it will appear here.</div>';return;}
+  list.innerHTML=keys.map(k=>{
+    const s=JSON.parse(localStorage.getItem('dbt_'+k)||'{}');const sk=s.skills||{};
+    const n=Object.values(sk).filter(Boolean).length;
+    return `<div class="arow" onclick="openArchiveDay('${k}')">
+      <div class="ad"><b>${prettyShort(k)}</b><small>${n} skill${n===1?'':'s'} · ${s.notes?'has notes':'—'}</small></div>
+      <div class="pill">${s.use!=null?s.use+'/7':'–'}</div></div>`;
+  }).join('');
+  window.scrollTo(0,0);
+}
+function openArchiveDay(k){document.getElementById('dayView').style.display='';
+  document.getElementById('archiveView').style.display='none';
+  document.getElementById('dayBar').style.display='flex';
+  document.getElementById('archiveBar').style.display='none';
+  document.getElementById('title').textContent='DBT Skills Diary';
+  curKey=k;load();window.scrollTo(0,0);}
+
+/* ---------- summary + share ---------- */
+function summary(){
+  let out='DBT Skills Diary — '+pretty(curKey)+'\n';
+  if(state.use!=null)out+='Skills used today: '+state.use+'/7\n';out+='\n';let any=false;
+  GROUPS.forEach((g,gi)=>{const used=g.skills.filter((s,si)=>state.skills[gi+'_'+si]).map(s=>s[0]);
+    if(used.length){any=true;out+=g.name+': '+used.join(', ')+'\n';}});
+  if(!any)out+='(No skills checked)\n';
+  if(state.notes&&state.notes.trim())out+='\nNotes: '+state.notes.trim()+'\n';
+  return out;
+}
+function share(how){const text=summary();
+  if(how==='wa'){const num=(cfg.wa||'').replace(/[^0-9]/g,'');
+    location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(text);}
+  else if(how==='email'){location.href='mailto:'+(cfg.email||'')+'?subject='+
+    encodeURIComponent('DBT Diary — '+pretty(curKey))+'&body='+encodeURIComponent(text);}
+  else if(how==='copy'){navigator.clipboard.writeText(text).then(()=>toast('Copied ✓'));closeMenu();}
+}
+function setTherapist(){const v=prompt('Therapist WhatsApp number (country code + number, digits only):',cfg.wa||'');
+  if(v!=null){cfg.wa=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Saved ✓');}closeMenu();}
+function setEmail(){const v=prompt("Therapist's email:",cfg.email||'');
+  if(v!=null){cfg.email=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Saved ✓');}closeMenu();}
+
+/* ---------- reminder ---------- */
+function reminder(){
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//DBT Diary//EN','BEGIN:VEVENT',
+    'UID:dbt-diary-daily@local','DTSTART:20240101T200000','RRULE:FREQ=DAILY',
+    'SUMMARY:Fill out DBT Skills Diary',
+    'DESCRIPTION:Open your diary card and send it to your therapist.',
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:DBT Diary','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  dl(new Blob([ics],{type:'text/calendar'}),'dbt-daily-reminder.ics');
+  closeMenu();toast('Open the file to add a daily 8pm reminder');
+}
+
+/* ---------- backup / restore ---------- */
+function exportAll(){
+  const data={};Object.keys(localStorage).filter(k=>k.startsWith('dbt_')).forEach(k=>data[k]=localStorage.getItem(k));
+  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'dbt-diary-backup-'+todayKey()+'.json');
+  closeMenu();toast('Backup downloaded ✓');
+}
+function importAll(){closeMenu();document.getElementById('fileIn').click();}
+document.getElementById('fileIn').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const data=JSON.parse(r.result);
+    Object.keys(data).forEach(k=>{if(k.startsWith('dbt_'))localStorage.setItem(k,data[k]);});
+    toast('Backup restored ✓');showDay();}catch(_){toast('Could not read that file');}};
+  r.readAsText(f);e.target.value='';
+});
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+
+/* ---------- ui ---------- */
+function openMenu(){document.getElementById('menu').classList.add('show');}
+function closeMenu(){document.getElementById('menu').classList.remove('show');}
+let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);}
+
+curKey=defaultKey();load();gate();
+</script>
+</body>
+</html>
