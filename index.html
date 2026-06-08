@@ -433,7 +433,7 @@ function renderCTF(){
   if(s==='intro'){
     h=`<p class="step-q">Let’s check the facts.</p>
     <p class="step-h">A DBT skill (Linehan) to see whether an emotion — and how strong it is — actually fits the situation, or fits your <i>interpretation</i> of it. Takes a few minutes. Nothing is sent anywhere unless you choose to at the end.</p>`;
-    nav(`<button class="next" onclick="ctfNext()">Start ▸</button>`);
+    document.getElementById('ctfNav').innerHTML=`<button class="next" onclick="ctfNext()">Start ▸</button>`;
   }
   else if(s==='emotion'){
     h=`<p class="step-q">What is the emotion you want to check?</p>
