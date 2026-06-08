@@ -13,6 +13,7 @@
     --m:#38bdf8; --i:#f472b6; --e:#fbbf24; --s:#34d399;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  button{cursor:pointer;font-family:inherit}
   body{margin:0;background:var(--bg);color:var(--ink);
     font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -38,7 +39,7 @@
   .group{margin:18px 0 6px;display:flex;align-items:center;gap:8px}
   .dot{width:10px;height:10px;border-radius:50%}
   .group h3{margin:0;font-size:15px;font-weight:700}
-  .group .count{margin-left:auto;color:var(--muted);font-size:13px}
+  .group .count{margin-inline-start:auto;color:var(--muted);font-size:13px}
   .skill{display:flex;align-items:center;gap:12px;padding:12px 12px;margin:7px 0;
     background:var(--card);border:1px solid var(--line);border-radius:12px;cursor:pointer;
     transition:background .12s,border-color .12s}
@@ -66,7 +67,7 @@
   .sheet{position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:16px 16px 0 0;
     padding:10px 14px calc(20px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
     max-height:80vh;overflow:auto}
-  .sheet button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);
+  .sheet button{display:block;width:100%;text-align:start;background:none;border:0;border-bottom:1px solid var(--line);
     color:var(--ink);padding:16px 4px;font-size:16px}
   .sheet button:last-child{border-bottom:0}
   .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#000c;color:#fff;
@@ -110,7 +111,7 @@
   .chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
   .emogrid button{background:var(--card);border:1px solid var(--line);color:var(--ink);
-    padding:16px 10px;border-radius:12px;font-size:16px;font-weight:600;text-align:left}
+    padding:16px 10px;border-radius:12px;font-size:16px;font-weight:600;text-align:start}
   .emogrid button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .iscale{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
   .iscale button{flex:1;min-width:30px;padding:14px 0;border:1px solid var(--line);background:var(--card2);
@@ -131,7 +132,7 @@
     display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
   .ctf .nav .back{background:var(--card2);color:var(--ink);flex:0 0 90px}
   .ctf .nav .next{background:var(--accent);color:#fff}
-  .fitbtn{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+  .fitbtn{display:block;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);
     color:var(--ink);padding:15px;border-radius:12px;font-size:15px;margin:8px 0;font-weight:600}
   .fitbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .fitbtn small{display:block;font-weight:400;color:var(--muted);margin-top:3px}.fitbtn.on small{color:#dbeafe}
@@ -139,16 +140,20 @@
     color:#fff;border:0;border-radius:14px;padding:16px;font-size:16px;font-weight:700}
   .sumbox{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;
     white-space:pre-wrap;font-size:14px;line-height:1.5}
+  .langbtn{background:var(--card2);border:1px solid var(--line);color:var(--ink);
+    height:38px;min-width:42px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;line-height:1}
+  [dir=rtl] .sumbox{text-align:right}
 </style>
 </head>
 <body>
 
 <div class="lock" id="lock">
-  <h2>🔒 DBT Diary</h2>
-  <div class="hint">Enter your passcode</div>
+  <h2 id="lockTitle">🔒 DBT Diary</h2>
+  <div class="hint" id="lockHint">Enter your passcode</div>
   <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" />
   <div class="err" id="pinErr"></div>
-  <button onclick="tryUnlock()">Unlock</button>
+  <button id="unlockBtn" onclick="tryUnlock()">Unlock</button>
 </div>
 
 <header>
@@ -157,6 +162,7 @@
     <div class="date" id="dateLine"></div>
   </div>
   <div class="nav">
+    <button class="langbtn" id="langBtn" onclick="toggleLang()">ع</button>
     <button onclick="step(-1)" title="Previous day">‹</button>
     <button onclick="step(1)" title="Next day">›</button>
   </div>
@@ -164,12 +170,12 @@
 
 <div class="wrap" id="dayView">
   <div class="panel">
-    <label class="scale">How much did you use skills today? <span class="hint">(0 = not at all · 7 = used them and they helped)</span></label>
+    <label class="scale"><span id="scaleLabel">How much did you use skills today?</span> <span class="hint" id="scaleHint">(0 = not at all · 7 = used them and they helped)</span></label>
     <div class="seg" id="useScale"></div>
   </div>
   <div id="skills"></div>
   <div class="panel">
-    <h2>Notes for my therapist</h2>
+    <h2 id="notesH2">Notes for my therapist</h2>
     <textarea id="notes" placeholder="Anything you want to add — urges, wins, what was hard…"></textarea>
   </div>
 </div>
@@ -179,28 +185,17 @@
 </div>
 
 <div class="bar" id="dayBar">
-  <button class="wa" onclick="share('wa')">WhatsApp</button>
-  <button class="em" onclick="share('email')">Email</button>
+  <button class="wa" id="waBtn" onclick="share('wa')">WhatsApp</button>
+  <button class="em" id="emailBtn" onclick="share('email')">Email</button>
   <button class="more" onclick="openMenu()">⋯</button>
 </div>
 
 <div class="bar" id="archiveBar" style="display:none">
-  <button class="em" onclick="showDay()">← Back to entry</button>
+  <button class="em" id="backBtn" onclick="showDay()">← Back to entry</button>
 </div>
 
 <div class="menu" id="menu" onclick="if(event.target.id==='menu')closeMenu()">
-  <div class="sheet">
-    <button onclick="showArchive()">🗂️ View archive (all days)</button>
-    <button onclick="share('copy')">📋 Copy this day as text</button>
-    <button onclick="setTherapist()">👤 Set therapist's WhatsApp number</button>
-    <button onclick="setEmail()">✉️ Set therapist's email</button>
-    <button onclick="reminder()">⏰ Add daily reminder (download .ics)</button>
-    <button onclick="setPin()">🔑 Set / change passcode</button>
-    <button onclick="removePin()">🔓 Remove passcode</button>
-    <button onclick="exportAll()">⬇️ Export backup (all days)</button>
-    <button onclick="importAll()">⬆️ Restore from backup</button>
-    <button onclick="closeMenu()">Close</button>
-  </div>
+  <div class="sheet" id="menuSheet"></div>
 </div>
 
 <!-- Check the Facts guided wizard -->
@@ -214,42 +209,156 @@
   <div class="nav" id="ctfNav"></div>
 </div>
 
+<!-- Radical Acceptance guided wizard -->
+<div class="ctf" id="ra">
+  <div class="top">
+    <button class="x" onclick="raClose()">✕</button>
+    <h2 id="raTitle">Radical Acceptance</h2>
+  </div>
+  <div class="prog"><i id="raProg"></i></div>
+  <div class="body" id="raBody"></div>
+  <div class="nav" id="raNav"></div>
+</div>
+
 <input type="file" id="fileIn" accept="application/json" style="display:none" />
 <div class="toast" id="toast"></div>
 
 <script>
+// Each skill: [en, sub_en, ar, sub_ar]. English name (index 0) is the stable key used for wizard launchers.
 const GROUPS = [
-  { name:"Mindfulness", color:"var(--m)", skills:[
-    ["Wise mind",""],["Observe","just notice"],["Describe","put words on, just the facts"],
-    ["Participate","enter into the experience"],["Non-judgmental",""],["One-mindfully","present moment"],
-    ["Effectiveness","focus on what works"] ]},
-  { name:"Interpersonal Effectiveness", color:"var(--i)", skills:[
-    ["Figure out interpersonal goals",""],["DEAR","Describe, Express, Assert, Reinforce"],
-    ["MAN-Mindful","Broken Record, Ignore Attacks"],["MAN","Appear confident, Negotiate"],
-    ["GIVE","Gentle, Interested, Validate, Easy manner"],["FAST","Fair, no-Apologies, Stick to values, Truthful"],
-    ["Attend to relationships",""] ]},
-  { name:"Emotion Regulation", color:"var(--e)", skills:[
-    ["Describing emotions",""],["Check the facts",""],["Opposite-to-emotion action",""],["Problem solving",""],
-    ["Accumulate positives","positive events or valued actions"],["Build Mastery / Cope ahead",""],
-    ["PLEASE","Physical ills, Eating, Avoid drugs, Sleep, Exercise"],["Mindfulness of current emotion",""] ]},
-  { name:"Survival & Acceptance", color:"var(--s)", skills:[
-    ["STOP","Stop, Take a step back, Observe, Proceed mindfully"],
-    ["TIP","Temperature, Intense exercise, Progressive relax"],["Pros and Cons",""],
-    ["Distract / Self-soothe / Improve the moment",""],["Radical Acceptance",""],["Willingness",""],
-    ["Mindfulness of current thoughts",""],["Half-smiling",""],["Willing hands",""] ]},
+  { name:"Mindfulness", ar:"اليقظة", color:"var(--m)", skills:[
+    ["Wise mind","","العقل الحكيم",""],
+    ["Observe","just notice","لاحِظ","مجرد ملاحظة"],
+    ["Describe","put words on, just the facts","اوصِف","حُط الكلام، الحقايق بس"],
+    ["Participate","enter into the experience","شارِك","ادخل في التجربة"],
+    ["Non-judgmental","","من غير أحكام",""],
+    ["One-mindfully","one thing at a time","بتركيز","حاجة واحدة في المرة"],
+    ["Effectiveness","focus on what works","بفعالية","ركّز على اللي بيجيب نتيجة"] ]},
+  { name:"Interpersonal Effectiveness", ar:"فعالية العلاقات", color:"var(--i)", skills:[
+    ["Figure out interpersonal goals","","حدّد أهدافك في العلاقة",""],
+    ["DEAR","Describe, Express, Assert, Reinforce","DEAR","صِف، عبّر، أكّد، عزّز"],
+    ["MAN-Mindful","Broken Record, Ignore Attacks","MAN ـ بتركيز","اسطوانة مشروخة، تجاهل الهجوم"],
+    ["MAN","Appear confident, Negotiate","MAN","اظهر بثقة، تفاوض"],
+    ["GIVE","Gentle, Interested, Validate, Easy manner","GIVE","لُطف، اهتمام، تصديق، أسلوب هادي"],
+    ["FAST","Fair, no-Apologies, Stick to values, Truthful","FAST","عادل، من غير اعتذار، تمسّك بقيمك، صادق"],
+    ["Attend to relationships","","اهتم بعلاقاتك",""] ]},
+  { name:"Emotion Regulation", ar:"تنظيم المشاعر", color:"var(--e)", skills:[
+    ["Describing emotions","","وصف المشاعر",""],
+    ["Check the facts","","مراجعة الحقائق",""],
+    ["Opposite-to-emotion action","","فعل العكس",""],
+    ["Problem solving","","حل المشكلة",""],
+    ["Accumulate positives","positive events or valued actions","اجمع الإيجابيات (Accumulate Positives)","أحداث إيجابية أو أفعال ليها قيمة"],
+    ["Build Mastery","do something that makes you feel competent","الإتقان والتمكن (Build Mastery)","اعمل حاجة تحسّسك بالكفاءة"],
+    ["Cope ahead","rehearse coping with a hard situation in advance","الاستعداد المسبق (Cope Ahead)","اتمرّن على التعامل مع موقف صعب قبل ما يحصل"],
+    ["PLEASE","Physical ills, Eating, Avoid drugs, Sleep, Exercise","تقليل القابلية للانفعال (PLEASE)","آلام جسمانية، أكل، ابعد عن المكيفات، نوم، رياضة"],
+    ["Mindfulness of current emotion","","ملاحظة المشاعر الحالية",""] ]},
+  { name:"Survival & Acceptance", ar:"تجاوز المحن والقبول", color:"var(--s)", skills:[
+    ["STOP","Stop, Take a step back, Observe, Proceed mindfully","قف (STOP)","قف، ارجع خطوة، لاحظ، كمّل بوعي"],
+    ["TIP","Temperature, Intense exercise, Progressive relax","TIP","حرارة/تلج، تمرين عنيف، استرخاء العضلات"],
+    ["Pros and Cons","","المميزات والعيوب",""],
+    ["Distract / Self-soothe / Improve the moment","","التشتيت / تهدئة الذات / تحسين اللحظة",""],
+    ["Radical Acceptance","","القبول الجذري",""],
+    ["Willingness","","الاستعداد والتقبّل (Willingness)",""],
+    ["Mindfulness of current thoughts","","ملاحظة الأفكار الحالية",""],
+    ["Half-smiling","","نص ابتسامة",""],
+    ["Willing hands","","الأيدي المتقبلة",""] ]},
 ];
 
 const cfg = JSON.parse(localStorage.getItem('dbt_cfg')||'{}');
 let curKey;        // 'YYYY-MM-DD' currently shown
 let state = {};
+let view = 'day';  // 'day' | 'archive'
+
+/* ---------- i18n (en / ar) ---------- */
+let LANG = cfg.lang || 'en';
+const T = {
+  appTitle:['DBT Skills Diary','مذكرة مهارات DBT'],
+  archive:['Archive','الأرشيف'],
+  allDays:['All saved days','كل الأيام المحفوظة'],
+  today:['Today · ','النهارده · '],
+  yesterday:['Yesterday · ','إمبارح · '],
+  scaleLabel:['How much did you use skills today?','قد إيه استخدمت مهاراتك في اليوم ده؟'],
+  scaleHint:['(0 = not at all · 7 = used them and they helped)','(٠ = ولا مرة · ٧ = استخدمتها وساعدتني)'],
+  notesH2:['Notes for my therapist','ملاحظات للمعالج'],
+  notesPh:['Anything you want to add — urges, wins, what was hard…','أي حاجة عايز تضيفها — رغبات، إنجازات، اللي كان صعب…'],
+  whatsapp:['WhatsApp','واتساب'],
+  email:['Email','إيميل'],
+  backEntry:['← Back to entry','→ رجوع لليوم'],
+  mArchive:['🗂️ View archive (all days)','🗂️ الأرشيف (كل الأيام)'],
+  mCopy:['📋 Copy this day as text','📋 نسخ اليوم كنص'],
+  mWa:["👤 Set therapist's WhatsApp number",'👤 رقم واتساب المعالج'],
+  mEmail:["✉️ Set therapist's email",'✉️ إيميل المعالج'],
+  mReminder:['⏰ Add daily reminder (download .ics)','⏰ تذكير يومي (تنزيل .ics)'],
+  mSetPin:['🔑 Set / change passcode','🔑 تعيين / تغيير رمز القفل'],
+  mRemovePin:['🔓 Remove passcode','🔓 إزالة رمز القفل'],
+  mExport:['⬇️ Export backup (all days)','⬇️ نسخة احتياطية (كل الأيام)'],
+  mImport:['⬆️ Restore from backup','⬆️ استرجاع من نسخة احتياطية'],
+  mClose:['Close','إغلاق'],
+  lockTitle:['🔒 DBT Diary','🔒 مذكرة DBT'],
+  lockHint:['Enter your passcode','اكتب رمز القفل'],
+  unlock:['Unlock','فتح'],
+  wrongPin:['Wrong passcode','رمز غلط'],
+  saved:['Saved ✓','اتحفظ ✓'],
+  copied:['Copied ✓','اتنسخ ✓'],
+  pinSet:['Passcode set ✓','اتعيّن الرمز ✓'],
+  pinRemoved:['Passcode removed','اتشال الرمز'],
+  backupDl:['Backup downloaded ✓','تم تنزيل النسخة ✓'],
+  backupRestored:['Backup restored ✓','تم الاسترجاع ✓'],
+  cantRead:['Could not read that file','مش قادر أقرا الملف'],
+  reminderMsg:['Open the file to add a daily 8pm reminder','افتح الملف عشان تضيف تذكير يومي الساعة ٨ مساءً'],
+  pinPrompt:['Choose a passcode (digits or text):','اختار رمز قفل (أرقام أو حروف):'],
+  waPrompt:['Therapist WhatsApp number (country code + number, digits only):','رقم واتساب المعالج (كود الدولة + الرقم، أرقام فقط):'],
+  emailPrompt:["Therapist's email:",'إيميل المعالج:'],
+  addedNotes:['Added to notes ✓','اتضاف للملاحظات ✓'],
+  noDays:['No days saved yet.<br>Fill out today and it will appear here.','لسه مفيش أيام محفوظة.<br>إملا النهارده وحيظهر هنا.'],
+  hasNotes:['has notes','فيه ملاحظات'],
+  sumTitle:['DBT Skills Diary — ','مذكرة مهارات DBT — '],
+  sumUsed:['Skills used today: ','استخدام المهارات: '],
+  sumNoSkills:['(No skills checked)','(مفيش مهارات متعلّمة)'],
+  sumNotes:['Notes: ','ملاحظات: '],
+  emailSubject:['DBT Diary — ','مذكرة DBT — '],
+};
+function t(k){return T[k][LANG==='ar'?1:0];}
+function loc(){return LANG==='ar'?'ar-EG':undefined;}
+function skName(s){return LANG==='ar'?(s[2]||s[0]):s[0];}
+function skSub(s){return LANG==='ar'?(s[3]||''):(s[1]||'');}
+function grName(g){return LANG==='ar'?g.ar:g.name;}
+function L(en,ar){return LANG==='ar'?ar:en;}                 // inline bilingual string
+function locItem(list,en){const f=list.find(x=>x[0]===en);return f?L(f[0],f[1]):en;}
+
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
+  document.getElementById('langBtn').textContent=LANG==='ar'?'EN':'ع';
+  document.getElementById('scaleLabel').textContent=t('scaleLabel');
+  document.getElementById('scaleHint').textContent=t('scaleHint');
+  document.getElementById('notesH2').textContent=t('notesH2');
+  document.getElementById('notes').placeholder=t('notesPh');
+  document.getElementById('waBtn').textContent=t('whatsapp');
+  document.getElementById('emailBtn').textContent=t('email');
+  document.getElementById('backBtn').textContent=t('backEntry');
+  document.getElementById('lockTitle').textContent=t('lockTitle');
+  document.getElementById('lockHint').textContent=t('lockHint');
+  document.getElementById('unlockBtn').textContent=t('unlock');
+  buildMenu();
+  if(view==='archive'){showArchive();}
+  else{document.getElementById('title').textContent=t('appTitle');render();}
+}
+function toggleLang(){LANG=LANG==='ar'?'en':'ar';cfg.lang=LANG;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));applyLang();}
+function buildMenu(){
+  const items=[['mArchive','showArchive()'],['mCopy',"share('copy')"],['mWa','setTherapist()'],['mEmail','setEmail()'],
+    ['mReminder','reminder()'],['mSetPin','setPin()'],['mRemovePin','removePin()'],['mExport','exportAll()'],
+    ['mImport','importAll()'],['mClose','closeMenu()']];
+  document.getElementById('menuSheet').innerHTML=items.map(([k,fn])=>`<button onclick="${fn}">${t(k)}</button>`).join('');
+}
 
 function pad(n){return String(n).padStart(2,'0');}
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 // You log the previous day, so the app opens on yesterday by default.
 function defaultKey(){return shiftKey(todayKey(),-1);}
 function keyToDate(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
-function pretty(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});}
-function prettyShort(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});}
+function pretty(k){return keyToDate(k).toLocaleDateString(loc(),{weekday:'long',month:'short',day:'numeric',year:'numeric'});}
+function prettyShort(k){return keyToDate(k).toLocaleDateString(loc(),{weekday:'short',month:'short',day:'numeric'});}
 
 /* ---------- passcode ---------- */
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
@@ -263,12 +372,12 @@ async function tryUnlock(){
   const v=document.getElementById('pinInput').value;
   if(await sha(v)===cfg.pinHash){document.getElementById('lock').classList.remove('show');
     document.getElementById('pinInput').value='';}
-  else{document.getElementById('pinErr').textContent='Wrong passcode';}
+  else{document.getElementById('pinErr').textContent=t('wrongPin');}
 }
 document.getElementById('pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock();});
-async function setPin(){const v=prompt('Choose a passcode (digits or text):');
-  if(v){cfg.pinHash=await sha(v);localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Passcode set ✓');}closeMenu();}
-function removePin(){delete cfg.pinHash;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Passcode removed');closeMenu();}
+async function setPin(){const v=prompt(t('pinPrompt'));
+  if(v){cfg.pinHash=await sha(v);localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast(t('pinSet'));}closeMenu();}
+function removePin(){delete cfg.pinHash;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast(t('pinRemoved'));closeMenu();}
 
 /* ---------- day load/save ---------- */
 function load(){
@@ -279,7 +388,7 @@ function load(){
 function save(){localStorage.setItem('dbt_'+curKey,JSON.stringify(state));}
 
 function render(){
-  const rel=curKey===todayKey()?'Today · ':curKey===defaultKey()?'Yesterday · ':'';
+  const rel=curKey===todayKey()?t('today'):curKey===defaultKey()?t('yesterday'):'';
   document.getElementById('dateLine').textContent=rel+pretty(curKey);
   let seg='';for(let i=0;i<=7;i++)seg+=`<button class="${state.use==i?'on':''}" onclick="setUse(${i})">${i}</button>`;
   document.getElementById('useScale').innerHTML=seg;
@@ -287,12 +396,14 @@ function render(){
   GROUPS.forEach((g,gi)=>{
     const done=g.skills.filter((_,si)=>state.skills[gi+'_'+si]).length;
     html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
-      <h3>${g.name}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
-    g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';
+      <h3>${grName(g)}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
+    g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);
       const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
-        <div class="name">${s[0]}${s[1]?`<span class="sub">${s[1]}</span>`:''}</div></div>`;
+        <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`;
       if(s[0]==='Check the facts'||s[0]==='Describing emotions'){
         html+=`<div class="skillrow">${row}<button class="skillgo" aria-label="Open guided walkthrough" onclick="launchCTF('${id}')">❯</button></div>`;
+      } else if(s[0]==='Radical Acceptance'){
+        html+=`<div class="skillrow">${row}<button class="skillgo" aria-label="Open Radical Acceptance walkthrough" onclick="launchRA('${id}')">❯</button></div>`;
       } else { html+=row; }
     });
   });
@@ -307,61 +418,63 @@ function shiftKey(k,d){const dt=keyToDate(k);dt.setDate(dt.getDate()+d);
   return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
 
 /* ---------- views ---------- */
-function showDay(){if(location.hash)history.replaceState(null,'','./');document.getElementById('dayView').style.display='';
+function showDay(){view='day';if(location.hash)history.replaceState(null,'','./');document.getElementById('dayView').style.display='';
   document.getElementById('archiveView').style.display='none';
   document.getElementById('dayBar').style.display='flex';
   document.getElementById('archiveBar').style.display='none';
-  document.getElementById('title').textContent='DBT Skills Diary';
+  document.getElementById('title').textContent=t('appTitle');
   curKey=defaultKey();load();window.scrollTo(0,0);}
-function showArchive(){closeMenu();
+function showArchive(){view='archive';closeMenu();
   if(location.hash!=='#archive')history.replaceState(null,'','#archive');
   document.getElementById('dayView').style.display='none';
   document.getElementById('archiveView').style.display='';
   document.getElementById('dayBar').style.display='none';
   document.getElementById('archiveBar').style.display='flex';
-  document.getElementById('title').textContent='Archive';
-  document.getElementById('dateLine').textContent='All saved days';
+  document.getElementById('title').textContent=t('archive');
+  document.getElementById('dateLine').textContent=t('allDays');
   const keys=Object.keys(localStorage).filter(k=>/^dbt_\d{4}-\d{2}-\d{2}$/.test(k))
     .map(k=>k.slice(4)).sort().reverse();
   const list=document.getElementById('archiveList');
-  if(!keys.length){list.innerHTML='<div class="empty">No days saved yet.<br>Fill out today and it will appear here.</div>';return;}
+  if(!keys.length){list.innerHTML=`<div class="empty">${t('noDays')}</div>`;return;}
   list.innerHTML=keys.map(k=>{
     const s=JSON.parse(localStorage.getItem('dbt_'+k)||'{}');const sk=s.skills||{};
     const n=Object.values(sk).filter(Boolean).length;
+    const skw=LANG==='ar'?(n+' مهارة'):(n+' skill'+(n===1?'':'s'));
     return `<div class="arow" onclick="openArchiveDay('${k}')">
-      <div class="ad"><b>${prettyShort(k)}</b><small>${n} skill${n===1?'':'s'} · ${s.notes?'has notes':'—'}</small></div>
+      <div class="ad"><b>${prettyShort(k)}</b><small>${skw} · ${s.notes?t('hasNotes'):'—'}</small></div>
       <div class="pill">${s.use!=null?s.use+'/7':'–'}</div></div>`;
   }).join('');
   window.scrollTo(0,0);
 }
-function openArchiveDay(k){document.getElementById('dayView').style.display='';
+function openArchiveDay(k){view='day';document.getElementById('dayView').style.display='';
   document.getElementById('archiveView').style.display='none';
   document.getElementById('dayBar').style.display='flex';
   document.getElementById('archiveBar').style.display='none';
-  document.getElementById('title').textContent='DBT Skills Diary';
+  document.getElementById('title').textContent=t('appTitle');
   curKey=k;load();window.scrollTo(0,0);}
 
 /* ---------- summary + share ---------- */
 function summary(){
-  let out='DBT Skills Diary — '+pretty(curKey)+'\n';
-  if(state.use!=null)out+='Skills used today: '+state.use+'/7\n';out+='\n';let any=false;
-  GROUPS.forEach((g,gi)=>{const used=g.skills.filter((s,si)=>state.skills[gi+'_'+si]).map(s=>s[0]);
-    if(used.length){any=true;out+=g.name+': '+used.join(', ')+'\n';}});
-  if(!any)out+='(No skills checked)\n';
-  if(state.notes&&state.notes.trim())out+='\nNotes: '+state.notes.trim()+'\n';
+  const sep=LANG==='ar'?'، ':', ';
+  let out=t('sumTitle')+pretty(curKey)+'\n';
+  if(state.use!=null)out+=t('sumUsed')+state.use+'/7\n';out+='\n';let any=false;
+  GROUPS.forEach((g,gi)=>{const used=g.skills.filter((s,si)=>state.skills[gi+'_'+si]).map(s=>skName(s));
+    if(used.length){any=true;out+=grName(g)+': '+used.join(sep)+'\n';}});
+  if(!any)out+=t('sumNoSkills')+'\n';
+  if(state.notes&&state.notes.trim())out+='\n'+t('sumNotes')+state.notes.trim()+'\n';
   return out;
 }
 function share(how){const text=summary();
   if(how==='wa'){const num=(cfg.wa||'').replace(/[^0-9]/g,'');
     location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(text);}
   else if(how==='email'){location.href='mailto:'+(cfg.email||'')+'?subject='+
-    encodeURIComponent('DBT Diary — '+pretty(curKey))+'&body='+encodeURIComponent(text);}
-  else if(how==='copy'){navigator.clipboard.writeText(text).then(()=>toast('Copied ✓'));closeMenu();}
+    encodeURIComponent(t('emailSubject')+pretty(curKey))+'&body='+encodeURIComponent(text);}
+  else if(how==='copy'){navigator.clipboard.writeText(text).then(()=>toast(t('copied')));closeMenu();}
 }
-function setTherapist(){const v=prompt('Therapist WhatsApp number (country code + number, digits only):',cfg.wa||'');
-  if(v!=null){cfg.wa=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Saved ✓');}closeMenu();}
-function setEmail(){const v=prompt("Therapist's email:",cfg.email||'');
-  if(v!=null){cfg.email=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast('Saved ✓');}closeMenu();}
+function setTherapist(){const v=prompt(t('waPrompt'),cfg.wa||'');
+  if(v!=null){cfg.wa=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast(t('saved'));}closeMenu();}
+function setEmail(){const v=prompt(t('emailPrompt'),cfg.email||'');
+  if(v!=null){cfg.email=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));toast(t('saved'));}closeMenu();}
 
 /* ---------- reminder ---------- */
 function reminder(){
@@ -372,21 +485,21 @@ function reminder(){
     'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:DBT Diary','END:VALARM',
     'END:VEVENT','END:VCALENDAR'].join('\r\n');
   dl(new Blob([ics],{type:'text/calendar'}),'dbt-daily-reminder.ics');
-  closeMenu();toast('Open the file to add a daily 8pm reminder');
+  closeMenu();toast(t('reminderMsg'));
 }
 
 /* ---------- backup / restore ---------- */
 function exportAll(){
   const data={};Object.keys(localStorage).filter(k=>k.startsWith('dbt_')).forEach(k=>data[k]=localStorage.getItem(k));
   dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'dbt-diary-backup-'+todayKey()+'.json');
-  closeMenu();toast('Backup downloaded ✓');
+  closeMenu();toast(t('backupDl'));
 }
 function importAll(){closeMenu();document.getElementById('fileIn').click();}
 document.getElementById('fileIn').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const data=JSON.parse(r.result);
     Object.keys(data).forEach(k=>{if(k.startsWith('dbt_'))localStorage.setItem(k,data[k]);});
-    toast('Backup restored ✓');showDay();}catch(_){toast('Could not read that file');}};
+    toast(t('backupRestored'));showDay();}catch(_){toast(t('cantRead'));}};
   r.readAsText(f);e.target.value='';
 });
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
@@ -398,9 +511,10 @@ let tT;function toast(m){const t=document.getElementById('toast');t.textContent=
   clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);}
 
 /* ===================== Check the Facts (guided) ===================== */
-const PRIMARY=['Fear','Sadness','Shame','Guilt','Happiness','Disgust','Anger'];
-const BODY=['Tight chest','Racing heart','Hot / flushed','Tense muscles','Shaky','Stomach knot','Heavy','Short of breath','Restless','Numb'];
-const URGES=['Withdraw / hide','Lash out','Run / escape','Cry','Shut down','Avoid it','Seek reassurance','Apologize','Check / control','Numb out'];
+// [en, ar] pairs — English (index 0) is the stored key; display localized.
+const PRIMARY=[['Fear','الخوف'],['Sadness','الحزن'],['Shame','الخزي'],['Guilt','الذنب'],['Happiness','السعادة'],['Disgust','القرف / الاشمئزاز'],['Anger','الغضب']];
+const BODY=[['Tight chest','صدر مضغوط'],['Racing heart','قلب بيدق بسرعة'],['Hot / flushed','سخونة / احمرار'],['Tense muscles','عضلات مشدودة'],['Shaky','رعشة'],['Stomach knot','معدة مقبوضة'],['Heavy','تقل'],['Short of breath','ضيق نفس'],['Restless','مش مستقر'],['Numb','تنميل / خدر']];
+const URGES=[['Withdraw / hide','انسحب / اختفي'],['Lash out','أهجم'],['Run / escape','أجري / أهرب'],['Cry','عياط'],['Shut down','أنغلق'],['Avoid it','أتجنّب'],['Seek reassurance','أدوّر على طمأنة'],['Apologize','أعتذر'],['Check / control','أتحكّم / أراقب'],['Numb out','أخدّر نفسي']];
 const ORDER=['intro','emotion','intensity','event','interp','body','urges','threat','catastrophe','fit','summary'];
 let ctf={};
 
@@ -412,8 +526,8 @@ function triggered(){return ctf.cantTell||ctf.intensity>=8;}
 
 function ctfNext(){
   const s=ctf.step;
-  if(s==='emotion'&&!ctf.emotion){return toast('Pick an emotion first');}
-  if(s==='intensity'&&ctf.intensity==null&&!ctf.cantTell){return toast('Tap a number, or “Can’t tell”');}
+  if(s==='emotion'&&!ctf.emotion){return toast(L('Pick an emotion first','اختار شعور الأول'));}
+  if(s==='intensity'&&ctf.intensity==null&&!ctf.cantTell){return toast(L('Tap a number, or “Can’t tell”','دوس رقم، أو «مش قادر أحدد»'));}
   if(s==='intensity'){if(triggered()){ctf.dtFrom='intensity';return gotoStep('dt');}return gotoStep('event');}
   if(s==='dt'){return gotoStep('event');}
   const i=ORDER.indexOf(s); if(i>=0&&i<ORDER.length-1)gotoStep(ORDER[i+1]);
@@ -433,11 +547,11 @@ function ctfFit(v){ctf.fit=v;renderCTF();}
 
 function setNav(html){document.getElementById('ctfNav').innerHTML=`<div class="navin">${html}</div>`;}
 function nav(extra){
-  const back=`<button class="back" onclick="ctfPrev()">Back</button>`;
-  setNav(back+(extra||`<button class="next" onclick="ctfNext()">Next ▸</button>`));
+  const back=`<button class="back" onclick="ctfPrev()">${L('Back','رجوع')}</button>`;
+  setNav(back+(extra||`<button class="next" onclick="ctfNext()">${L('Next ▸','التالي ▸')}</button>`));
 }
 function chips(field,list){return `<div class="chips">`+list.map(l=>
-  `<button class="${ctf[field].includes(l)?'on':''}" onclick="ctfChip('${field}','${l}')">${l}</button>`).join('')+`</div>`;}
+  `<button class="${ctf[field].includes(l[0])?'on':''}" onclick="ctfChip('${field}','${l[0]}')">${L(l[0],l[1])}</button>`).join('')+`</div>`;}
 
 function renderCTF(){
   const b=document.getElementById('ctfBody'); const s=ctf.step;
@@ -445,139 +559,248 @@ function renderCTF(){
   document.getElementById('ctfProg').style.width=(idx/(ORDER.length-1)*100)+'%';
   const CHECK=['threat','catastrophe','fit'];
   document.getElementById('ctfTitle').textContent =
-    (s==='intro'||s==='summary')?'Describe + Check the Facts':CHECK.includes(s)?'Check the Facts':'Describe the Emotion';
+    (s==='intro'||s==='summary')?L('Describe + Check the Facts','اوصف + راجع الحقائق')
+    :CHECK.includes(s)?L('Check the Facts','مراجعة الحقائق'):L('Describe the Emotion','وصف المشاعر');
   let h='';
   if(s==='intro'){
-    h=`<p class="step-q">Describe the emotion, then check the facts.</p>
-    <p class="step-h">Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.</p>`;
-    setNav(`<button class="next" onclick="ctfNext()">Start ▸</button>`);
+    h=`<p class="step-q">${L('Describe the emotion, then check the facts.','اوصف المشاعر، وبعدين راجع الحقائق.')}</p>
+    <p class="step-h">${L('Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.','مهارتين DBT في واحدة. الأول <b>توصف المشاعر</b> — إيه اللي حصل، أحاسيس الجسم، الرغبات. وبعدين <b>تراجع الحقائق</b> — هل الشعور، وقد إيه هو قوي، فعلاً مناسب للموقف، ولا مناسب لـ<i>تفسيرك</i> ليه؟ دقايق قليلة. مفيش حاجة بتتبعت لحد إلا لو اخترت في الآخر.')}</p>`;
+    setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','ابدأ ▸')}</button>`);
   }
   else if(s==='emotion'){
-    h=`<p class="step-q">What is the emotion you want to check?</p>
-    <p class="step-h">Pick the one that fits best. (DBT primary emotions.)</p>
-    <div class="emogrid">`+PRIMARY.map(e=>`<button class="${ctf.emotion===e?'on':''}" onclick="ctfEmo('${e}')">${e}</button>`).join('')+`</div>
-    <button class="canttell ${ctf.cantName?'on':''}" onclick="ctfCantName()">I can’t name what I’m feeling</button>
-    <div class="lab">A more specific word for it (optional)</div>
-    <input class="canttell" style="text-align:left" placeholder="e.g. resentful, anxious, humiliated…" value="${ctf.emotionWord||''}" oninput="ctf.emotionWord=this.value">`;
+    h=`<p class="step-q">${L('What is the emotion you want to check?','إيه الشعور اللي عايز تراجعه؟')}</p>
+    <p class="step-h">${L('Pick the one that fits best. (DBT primary emotions.)','اختار اللي بيوصفك أكتر. (المشاعر الأساسية في DBT)')}</p>
+    <div class="emogrid">`+PRIMARY.map(e=>`<button class="${ctf.emotion===e[0]?'on':''}" onclick="ctfEmo('${e[0]}')">${L(e[0],e[1])}</button>`).join('')+`</div>
+    <button class="canttell ${ctf.cantName?'on':''}" onclick="ctfCantName()">${L('I can’t name what I’m feeling','مش عارف أسمّي اللي حاسس بيه')}</button>
+    <div class="lab">${L('A more specific word for it (optional)','كلمة أدق ليه (اختياري)')}</div>
+    <input class="canttell" style="text-align:start" placeholder="${L('e.g. resentful, anxious, humiliated…','مثلاً: متضايق، قلقان، متهان…')}" value="${ctf.emotionWord||''}" oninput="ctf.emotionWord=this.value">`;
     nav();
   }
   else if(s==='intensity'){
-    h=`<p class="step-q">How intense is it, 0–10?</p>
-    <p class="step-h">0 = not at all · 10 = the most you’ve ever felt it.</p>
+    h=`<p class="step-q">${L('How intense is it, 0–10?','قد إيه شدته، من ٠ لـ ١٠؟')}</p>
+    <p class="step-h">${L('0 = not at all · 10 = the most you’ve ever felt it.','٠ = ولا حاجة · ١٠ = أقوى ما حسيت بيه في حياتك.')}</p>
     <div class="iscale">`+Array.from({length:11},(_,n)=>
       `<button class="${n>=8?'hi':'lo'} ${ctf.intensity===n?'on':''}" onclick="ctfInt(${n})">${n}</button>`).join('')+`</div>
-    <button class="canttell ${ctf.cantTell?'on':''}" onclick="ctfCant()">I can’t tell how intense it is</button>`;
+    <button class="canttell ${ctf.cantTell?'on':''}" onclick="ctfCant()">${L('I can’t tell how intense it is','مش قادر أحدد شدته')}</button>`;
     nav();
   }
   else if(s==='dt'){
-    h=`<div class="alert"><h3>⚠️ Let’s lower the intensity first</h3>
-      <p style="margin:0">When an emotion is this strong (or hard to read), the thinking brain is offline — Check the Facts won’t land yet. Use a <b>Distress Tolerance</b> skill to take the edge off, <i>then</i> come back to this.</p>
+    h=`<div class="alert"><h3>${L('⚠️ Let’s lower the intensity first','⚠️ خلينا نهدّي الشدة الأول')}</h3>
+      <p style="margin:0">${L('When an emotion is this strong (or hard to read), the thinking brain is offline — Check the Facts won’t land yet. Use a <b>Distress Tolerance</b> skill to take the edge off, <i>then</i> come back to this.','لما الشعور يبقى بالقوة دي (أو صعب تقراه)، المخ المفكّر بيفصل — مراجعة الحقائق مش هتنفع دلوقتي. استخدم مهارة من <b>تجاوز المحن</b> عشان تخفّف، وبعدين ارجع.')}</p>
       <ul>
-        <li><b>TIP</b> — cold water on your face / hold ice, or intense exercise for a few minutes, then paced breathing (out longer than in)</li>
-        <li><b>STOP</b> — Stop, Take a step back, Observe, Proceed mindfully</li>
-        <li><b>Distract & Self-soothe</b> — change activity; soothe your five senses</li>
+        <li>${L('<b>TIP</b> — cold water on your face / hold ice, or intense exercise for a few minutes, then paced breathing (out longer than in)','<b>TIP</b> — مياه باردة على وشك / امسك تلج، أو تمرين عنيف لكام دقيقة، وبعدين تنفّس بإيقاع (الزفير أطول من الشهيق)')}</li>
+        <li>${L('<b>STOP</b> — Stop, Take a step back, Observe, Proceed mindfully','<b>STOP</b> — قف، ارجع خطوة، لاحظ، كمّل بوعي')}</li>
+        <li>${L('<b>Distract & Self-soothe</b> — change activity; soothe your five senses','<b>التشتيت وتهدئة الذات</b> — غيّر النشاط؛ هدّي حواسك الخمسة')}</li>
       </ul></div>
-    <p class="step-h">Come back when you’re at roughly a 7 or below. You can continue now if you want, but it may be harder.</p>`;
-    nav(`<button class="next" onclick="ctfNext()">I’ve eased it — continue ▸</button>`);
+    <p class="step-h">${L('Come back when you’re at roughly a 7 or below. You can continue now if you want, but it may be harder.','ارجع لما تبقى عند ٧ أو أقل. تقدر تكمّل دلوقتي لو حابب، بس ممكن يبقى أصعب.')}</p>`;
+    nav(`<button class="next" onclick="ctfNext()">${L('I’ve eased it — continue ▸','خفّفتها — كمّل ▸')}</button>`);
   }
   else if(s==='event'){
-    h=`<p class="step-q">What actually happened?</p>
-    <p class="step-h">Describe <b>only the facts you observed</b> — what you literally saw and heard, like a camera would. No judgments, no “they meant…”, no assumptions. That part comes next.</p>
-    <textarea placeholder="Just the observable facts: who, what, where, what was said/done…" oninput="ctf.event=this.value">${ctf.event||''}</textarea>
-    <p class="step-h" style="margin-top:10px">✓ “He said ‘we’ll talk later’ and left the room.”<br>✗ “He blew me off because he doesn’t care.” (that’s an interpretation)</p>`;
+    h=`<p class="step-q">${L('What actually happened?','إيه اللي حصل فعلاً؟')}</p>
+    <p class="step-h">${L('Describe <b>only the facts you observed</b> — what you literally saw and heard, like a camera would. No judgments, no “they meant…”, no assumptions. That part comes next.','اوصف <b>الحقايق اللي لاحظتها بس</b> — اللي شفته وسمعته حرفيًا زي الكاميرا. من غير أحكام، من غير «هو قصده…»، من غير افتراضات. ده بييجي بعدين.')}</p>
+    <textarea placeholder="${L('Just the observable facts: who, what, where, what was said/done…','الحقايق الملحوظة بس: مين، إيه، فين، اتقال/اتعمل إيه…')}" oninput="ctf.event=this.value">${ctf.event||''}</textarea>
+    <p class="step-h" style="margin-top:10px">${L('✓ “He said ‘we’ll talk later’ and left the room.”<br>✗ “He blew me off because he doesn’t care.” (that’s an interpretation)','✓ «قال ‹هنتكلم بعدين› وخرج من الأوضة.»<br>✗ «تجاهلني عشان مش مهتم.» (ده تفسير)')}</p>`;
     nav();
   }
   else if(s==='interp'){
-    h=`<p class="step-q">What are your interpretations & assumptions?</p>
-    <p class="step-h">The thoughts, meanings and assumptions you’re adding to the facts.</p>
-    <textarea placeholder="What I’m telling myself it means…" oninput="ctf.interp=this.value">${ctf.interp||''}</textarea>
-    <div class="lab">Now — what are other possible interpretations? (look at all sides)</div>
-    <textarea placeholder="Other ways a reasonable person might read the same facts…" oninput="ctf.otherInterp=this.value">${ctf.otherInterp||''}</textarea>`;
+    h=`<p class="step-q">${L('What are your interpretations & assumptions?','إيه تفسيراتك وافتراضاتك؟')}</p>
+    <p class="step-h">${L('The thoughts, meanings and assumptions you’re adding to the facts.','الأفكار والمعاني والافتراضات اللي بتضيفها على الحقايق.')}</p>
+    <textarea placeholder="${L('What I’m telling myself it means…','اللي بقوله لنفسي إن ده معناه…')}" oninput="ctf.interp=this.value">${ctf.interp||''}</textarea>
+    <div class="lab">${L('Now — what are other possible interpretations? (look at all sides)','دلوقتي — إيه التفسيرات التانية الممكنة؟ (بصّ لكل الجهات)')}</div>
+    <textarea placeholder="${L('Other ways a reasonable person might read the same facts…','طرق تانية ممكن حد عاقل يقرا بيها نفس الحقايق…')}" oninput="ctf.otherInterp=this.value">${ctf.otherInterp||''}</textarea>`;
     nav();
   }
   else if(s==='body'){
-    h=`<p class="step-q">What do you notice in your body?</p>
-    <p class="step-h">Tap any that fit; add your own.</p>${chips('bodyChips',BODY)}
-    <textarea placeholder="Anything else you feel in your body…" oninput="ctf.bodyText=this.value">${ctf.bodyText||''}</textarea>`;
+    h=`<p class="step-q">${L('What do you notice in your body?','إيه اللي بتحس بيه في جسمك؟')}</p>
+    <p class="step-h">${L('Tap any that fit; add your own.','دوس على اللي يناسبك؛ وضيف بتاعك.')}</p>${chips('bodyChips',BODY)}
+    <textarea placeholder="${L('Anything else you feel in your body…','أي حاجة تانية حاساها في جسمك…')}" oninput="ctf.bodyText=this.value">${ctf.bodyText||''}</textarea>`;
     nav();
   }
   else if(s==='urges'){
-    h=`<p class="step-q">What is the emotion urging you to do?</p>
-    <p class="step-h">Every emotion has an action urge. Name it — you don’t have to act on it.</p>${chips('urgeChips',URGES)}
-    <textarea placeholder="What you feel pulled to do or say…" oninput="ctf.urgeText=this.value">${ctf.urgeText||''}</textarea>`;
+    h=`<p class="step-q">${L('What is the emotion urging you to do?','الشعور بيدفعك تعمل إيه؟')}</p>
+    <p class="step-h">${L('Every emotion has an action urge. Name it — you don’t have to act on it.','كل شعور ليه رغبة ملحة للتصرف. سمّيها — مش لازم تنفّذها.')}</p>${chips('urgeChips',URGES)}
+    <textarea placeholder="${L('What you feel pulled to do or say…','اللي حاسس إنك متدفع تعمله أو تقوله…')}" oninput="ctf.urgeText=this.value">${ctf.urgeText||''}</textarea>`;
     nav();
   }
   else if(s==='threat'){
-    h=`<p class="step-q">Are you assuming a threat?</p>
-    <p class="step-h">Name the threat you’re sensing, then weigh it honestly.</p>
-    <textarea placeholder="The threat/danger I’m assuming is…" oninput="ctf.threat=this.value">${ctf.threat||''}</textarea>
-    <div class="lab">How likely is it to actually happen? (0–100%)</div>
-    <input class="canttell" style="text-align:left" inputmode="numeric" placeholder="e.g. 20%" value="${ctf.threatProb||''}" oninput="ctf.threatProb=this.value">
-    <div class="lab">What other outcomes are possible?</div>
-    <textarea placeholder="Other things that could happen instead…" oninput="ctf.otherOutcomes=this.value">${ctf.otherOutcomes||''}</textarea>`;
+    h=`<p class="step-q">${L('Are you assuming a threat?','هل بتفترض وجود تهديد؟')}</p>
+    <p class="step-h">${L('Name the threat you’re sensing, then weigh it honestly.','سمّي التهديد اللي حاسّه، وبعدين وزنه بصدق.')}</p>
+    <textarea placeholder="${L('The threat/danger I’m assuming is…','التهديد/الخطر اللي بفترضه هو…')}" oninput="ctf.threat=this.value">${ctf.threat||''}</textarea>
+    <div class="lab">${L('How likely is it to actually happen? (0–100%)','قد إيه احتمال إنه يحصل فعلاً؟ (٠–١٠٠٪)')}</div>
+    <input class="canttell" style="text-align:start" inputmode="numeric" placeholder="${L('e.g. 20%','مثلاً ٢٠٪')}" value="${ctf.threatProb||''}" oninput="ctf.threatProb=this.value">
+    <div class="lab">${L('What other outcomes are possible?','إيه النهايات التانية الممكنة؟')}</div>
+    <textarea placeholder="${L('Other things that could happen instead…','حاجات تانية ممكن تحصل بدالها…')}" oninput="ctf.otherOutcomes=this.value">${ctf.otherOutcomes||''}</textarea>`;
     nav();
   }
   else if(s==='catastrophe'){
-    h=`<p class="step-q">What’s the catastrophe — and could you cope?</p>
-    <p class="step-h">Picture the worst case. Then picture yourself actually coping with it (problem-solving, coping ahead, or radical acceptance).</p>
-    <textarea placeholder="Worst case that could realistically happen…" oninput="ctf.catastrophe=this.value">${ctf.catastrophe||''}</textarea>
-    <div class="lab">How I could cope even if it happened</div>
-    <textarea placeholder="I could handle it by…" oninput="ctf.coping=this.value">${ctf.coping||''}</textarea>`;
+    h=`<p class="step-q">${L('What’s the catastrophe — and could you cope?','إيه الكارثة — وهتقدر تتعامل؟')}</p>
+    <p class="step-h">${L('Picture the worst case. Then picture yourself actually coping with it (problem-solving, coping ahead, or radical acceptance).','تخيّل أسوأ احتمال. وبعدين تخيّل نفسك بتتعامل معاه فعلاً (حل المشكلة، الاستعداد المسبق، أو القبول الجذري).')}</p>
+    <textarea placeholder="${L('Worst case that could realistically happen…','أسوأ حاجة ممكن تحصل فعلاً…')}" oninput="ctf.catastrophe=this.value">${ctf.catastrophe||''}</textarea>
+    <div class="lab">${L('How I could cope even if it happened','ازاي ممكن أتعامل حتى لو حصلت')}</div>
+    <textarea placeholder="${L('I could handle it by…','أقدر أتصرف بـ…')}" oninput="ctf.coping=this.value">${ctf.coping||''}</textarea>`;
     nav();
   }
   else if(s==='fit'){
     const opt=(v,t,d)=>`<button class="fitbtn ${ctf.fit===v?'on':''}" onclick="ctfFit('${v}')">${t}<small>${d}</small></button>`;
-    h=`<p class="step-q">Does the emotion — and its intensity — fit the facts?</p>
-    <p class="step-h">Looking at everything above, decide honestly.</p>
-    ${opt('fits','✅ It fits the facts','The emotion makes sense and so does its strength → problem-solve / act on it skilfully.')}
-    ${opt('partly','🟡 The emotion fits, but the intensity doesn’t','Real concern, but turned up too high → check the facts, then act opposite to the extra intensity.')}
-    ${opt('doesnt','❌ It doesn’t fit the facts','It’s driven by the interpretation, not the facts → try acting opposite to the urge.')}`;
+    h=`<p class="step-q">${L('Does the emotion — and its intensity — fit the facts?','هل المشاعر — وشدتها — مناسبة للحقائق؟')}</p>
+    <p class="step-h">${L('Looking at everything above, decide honestly.','بصّ لكل اللي فوق، وقرر بصدق.')}</p>
+    ${opt('fits',L('✅ It fits the facts','✅ مناسبة للحقائق'),L('The emotion makes sense and so does its strength → problem-solve / act on it skilfully.','الشعور منطقي وشدته كمان → حل المشكلة / اتصرف بمهارة.'))}
+    ${opt('partly',L('🟡 The emotion fits, but the intensity doesn’t','🟡 الشعور مناسب لكن الشدة لأ'),L('Real concern, but turned up too high → check the facts, then act opposite to the extra intensity.','قلق حقيقي بس متعلّي أوي → راجع الحقايق، وبعدين اعمل العكس للشدة الزيادة.'))}
+    ${opt('doesnt',L('❌ It doesn’t fit the facts','❌ مش مناسبة للحقائق'),L('It’s driven by the interpretation, not the facts → try acting opposite to the urge.','ناتج عن التفسير مش الحقايق → جرّب تعمل عكس الرغبة الملحة.'))}`;
     nav();
   }
   else if(s==='summary'){
     state.skills['2_0']=true;state.skills['2_1']=true;save();  // Describing emotions + Check the facts both practiced
-    h=`<p class="step-q">Here’s your reflection</p>
+    h=`<p class="step-q">${L('Here’s your reflection','دي خلاصتك')}</p>
     <div class="sumbox">${ctfSummary().replace(/</g,'&lt;')}</div>
-    <button class="ctfopen" style="background:var(--accent2)" onclick="ctfToNotes()">＋ Add to ${curKey===todayKey()?'today':'this day'}’s notes</button>
-    <button class="canttell" onclick="ctfShare()">📲 Send this to my therapist (WhatsApp)</button>
-    <button class="canttell" onclick="navigator.clipboard.writeText(ctfSummary()).then(()=>toast('Copied ✓'))">📋 Copy</button>`;
-    setNav(`<button class="back" onclick="ctfPrev()">Back</button><button class="next" onclick="closeCTF()">Done</button>`);
+    <button class="ctfopen" style="background:var(--accent2)" onclick="ctfToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+    <button class="canttell" onclick="ctfShare()">${L('📲 Send this to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>
+    <button class="canttell" onclick="navigator.clipboard.writeText(ctfSummary()).then(()=>toast(t('copied')))">${L('📋 Copy','📋 نسخ')}</button>`;
+    setNav(`<button class="back" onclick="ctfPrev()">${L('Back','رجوع')}</button><button class="next" onclick="closeCTF()">${L('Done','تمام')}</button>`);
     b.innerHTML=h;return;
   }
   b.innerHTML=h;
 }
 
 function ctfSummary(){
-  const L=[]; L.push('🧭 Check the Facts — '+pretty(curKey));
-  let e=ctf.cantName?'couldn’t name it':(ctf.emotion||'—'); if(ctf.emotionWord)e+=' ('+ctf.emotionWord+')';
-  L.push('Emotion: '+e+'  ·  Intensity: '+(ctf.cantTell?'hard to tell':(ctf.intensity!=null?ctf.intensity+'/10':'—')));
-  const add=(t,v)=>{if(v&&String(v).trim())L.push('\n'+t+': '+String(v).trim());};
-  add('What happened (just the facts)',ctf.event);
-  add('My interpretation',ctf.interp);
-  add('Other interpretations',ctf.otherInterp);
-  const body=[...(ctf.bodyChips||[]),ctf.bodyText].filter(x=>x&&String(x).trim()).join(', ');
-  add('Body sensations',body);
-  const urge=[...(ctf.urgeChips||[]),ctf.urgeText].filter(x=>x&&String(x).trim()).join(', ');
-  add('Action urges',urge);
-  if((ctf.threat||'').trim()){let t=ctf.threat.trim();if(ctf.threatProb)t+='  (likelihood: '+ctf.threatProb+')';L.push('\nThreat I’m assuming: '+t);}
-  add('Other possible outcomes',ctf.otherOutcomes);
-  add('Worst case',ctf.catastrophe);
-  add('How I could cope',ctf.coping);
-  const fitTxt={fits:'The emotion fits the facts.',partly:'The emotion fits, but its intensity doesn’t.',doesnt:'The emotion does NOT fit the facts.'}[ctf.fit];
-  if(fitTxt)L.push('\nConclusion: '+fitTxt);
-  return L.join('\n');
+  const sep=LANG==='ar'?'، ':', ';
+  const O=[]; O.push(L('🧭 Check the Facts — ','🧭 مراجعة الحقائق — ')+pretty(curKey));
+  const emoP=PRIMARY.find(p=>p[0]===ctf.emotion);
+  let e=ctf.cantName?L('couldn’t name it','مش متسمّي'):(emoP?L(emoP[0],emoP[1]):(ctf.emotion||'—')); if(ctf.emotionWord)e+=' ('+ctf.emotionWord+')';
+  O.push(L('Emotion: ','الشعور: ')+e+'  ·  '+L('Intensity: ','الشدة: ')+(ctf.cantTell?L('hard to tell','صعب التحديد'):(ctf.intensity!=null?ctf.intensity+'/10':'—')));
+  const add=(lab,v)=>{if(v&&String(v).trim())O.push('\n'+lab+': '+String(v).trim());};
+  add(L('What happened (just the facts)','اللي حصل (الحقايق بس)'),ctf.event);
+  add(L('My interpretation','تفسيري'),ctf.interp);
+  add(L('Other interpretations','تفسيرات تانية'),ctf.otherInterp);
+  const body=[...(ctf.bodyChips||[]).map(x=>locItem(BODY,x)),ctf.bodyText].filter(x=>x&&String(x).trim()).join(sep);
+  add(L('Body sensations','أحاسيس الجسم'),body);
+  const urge=[...(ctf.urgeChips||[]).map(x=>locItem(URGES,x)),ctf.urgeText].filter(x=>x&&String(x).trim()).join(sep);
+  add(L('Action urges','الرغبات الملحة'),urge);
+  if((ctf.threat||'').trim()){let th=ctf.threat.trim();if(ctf.threatProb)th+='  ('+L('likelihood: ','الاحتمال: ')+ctf.threatProb+')';O.push('\n'+L('Threat I’m assuming: ','التهديد اللي بفترضه: ')+th);}
+  add(L('Other possible outcomes','نهايات تانية ممكنة'),ctf.otherOutcomes);
+  add(L('Worst case','أسوأ احتمال'),ctf.catastrophe);
+  add(L('How I could cope','ازاي أقدر أتعامل'),ctf.coping);
+  const fitTxt={fits:L('The emotion fits the facts.','المشاعر مناسبة للحقائق.'),partly:L('The emotion fits, but its intensity doesn’t.','المشاعر مناسبة لكن شدتها لأ.'),doesnt:L('The emotion does NOT fit the facts.','المشاعر مش مناسبة للحقائق.')}[ctf.fit];
+  if(fitTxt)O.push('\n'+L('Conclusion: ','الخلاصة: ')+fitTxt);
+  return O.join('\n');
 }
 function ctfToNotes(){
   const t=ctfSummary();
   state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+t;
-  save();render();toast('Added to notes ✓');closeCTF();
+  save();render();toast(t('addedNotes'));closeCTF();
 }
 function ctfShare(){
   const num=(cfg.wa||'').replace(/[^0-9]/g,'');
   location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(ctfSummary());
 }
 
-curKey=defaultKey();load();gate();
+/* ===================== Radical Acceptance (guided) ===================== */
+const RA_ORDER=['intro','observe','asis','causes','whole','opposite','cope','body','grief','worth','proscons','summary'];
+let ra={};
+function launchRA(id){state.skills[id]=true;save();render();raOpen();}
+function raOpen(){ra={i:0,bodyChips:[]};document.getElementById('ra').classList.add('show');raRender();}
+function raClose(){document.getElementById('ra').classList.remove('show');render();}
+function raSetNav(html){document.getElementById('raNav').innerHTML=`<div class="navin">${html}</div>`;}
+function raChip(l){const a=ra.bodyChips;const k=a.indexOf(l);k>=0?a.splice(k,1):a.push(l);raRender();}
+function raWhole(){ra.wholeSelf=!ra.wholeSelf;raRender();}
+function raNext(){const id=RA_ORDER[ra.i];
+  if(id==='observe'&&!(ra.reality||'').trim())return toast(L('Name the reality you’re fighting','سمّي الواقع اللي بتحاربه'));
+  if(ra.i<RA_ORDER.length-1){ra.i++;raRender();document.getElementById('raBody').scrollTop=0;}}
+function raPrev(){if(ra.i>0){ra.i--;raRender();document.getElementById('raBody').scrollTop=0;}else raClose();}
+
+function raRender(){
+  const id=RA_ORDER[ra.i];
+  document.getElementById('raProg').style.width=(ra.i/(RA_ORDER.length-1)*100)+'%';
+  document.getElementById('raTitle').textContent=L('Radical Acceptance','القبول الجذري');
+  let h='';
+  if(id==='intro'){
+    h=`<p class="step-q">${L('🌳 Radical Acceptance','🌳 القبول الجذري')}</p>
+    <p class="step-h">${L('Accepting reality fully — <b>as it is, right now</b> — when it isn’t the life you want. It is <b>not</b> approval, <b>not</b> love, <b>not</b> giving up, and <b>not</b> being against change. It’s letting go of the <i>fight</i> with reality, so you stop adding suffering on top of pain.','إنك تتقبّل الواقع بالكامل — <b>زي ما هو دلوقتي</b> — حتى لو مش الحياة اللي عايزها. هو <b>مش</b> موافقة، <b>مش</b> حب، <b>مش</b> استسلام، و<b>مش</b> ضد التغيير. هو إنك تبطّل <i>تتعارك</i> مع الواقع، عشان متزوّدش معاناة فوق الألم.')}</p>`;
+    raSetNav(`<button class="next" onclick="raNext()">${L('Start ▸','ابدأ ▸')}</button>`);return done(h);
+  }
+  if(id==='observe'){
+    h=`<p class="step-q">${L('What reality are you fighting?','إيه الواقع اللي بتحاربه؟')}</p>
+    <p class="step-h">${L('Notice where you’re stuck on “this shouldn’t be happening.” Name the fact you’re refusing or struggling to accept.','لاحظ إنت فين عالق في «ده مكنش المفروض يحصل». سمّي الحقيقة اللي رافض أو بتتصعّب تتقبلها.')}</p>
+    <textarea placeholder="${L('The thing I can’t / won’t accept is…','الحاجة اللي مش قادر/مش عايز أتقبلها هي…')}" oninput="ra.reality=this.value">${ra.reality||''}</textarea>`;}
+  else if(id==='asis'){
+    h=`<p class="step-q">${L('Reality is just as it is.','الواقع زي ما هو.')}</p>
+    <p class="step-h">${L('The facts are already true, whether or not you approve. Remind yourself — in your own words.','الحقايق بقت حقيقة فعلاً، سواء وافقت أو لأ. فكّر نفسك — بكلامك إنت.')}</p>
+    <textarea placeholder="${L('e.g. “I can’t change that this already happened. It is what it is right now.”','مثلاً: «مقدرش أغيّر إن ده حصل خلاص. هو كده دلوقتي.»')}" oninput="ra.ownWords=this.value">${ra.ownWords||''}</textarea>`;}
+  else if(id==='causes'){
+    h=`<p class="step-q">${L('What caused this reality?','إيه أسباب الواقع ده؟')}</p>
+    <p class="step-h">${L('Every reality has a chain of causes — given them, it couldn’t be otherwise. Seeing the causes makes it easier to accept (not approve).','كل واقع ليه سلسلة أسباب — بسببها، مكنش ممكن يبقى غير كده. إنك تشوف الأسباب بيسهّل التقبّل (مش الموافقة).')}</p>
+    <textarea placeholder="${L('The things that led to this…','الحاجات اللي أدّت لده…')}" oninput="ra.causes=this.value">${ra.causes||''}</textarea>`;}
+  else if(id==='whole'){
+    h=`<p class="step-q">${L('Accept with your whole self.','اتقبّل بكل كيانك.')}</p>
+    <p class="step-h">${L('Acceptance lives in the body, not just the head. Take a few slow breaths (out longer than in). Soften your posture — try <b>half-smiling</b> and <b>willing hands</b> (palms open, unclenched). Let it settle through mind, body and spirit.','القبول بيحصل في الجسم، مش بس في الدماغ. خد نفس بطيء كام مرة (الزفير أطول من الشهيق). ليّن وقفتك — جرّب <b>نص ابتسامة</b> و<b>الأيدي المتقبلة</b> (راحة اليد مفتوحة، مش مقبوضة). سيبه يستقر في العقل والجسم والروح.')}</p>
+    <button class="canttell ${ra.wholeSelf?'on':''}" onclick="raWhole()">${ra.wholeSelf?'✓ ':''}${L('I took a moment to practice this','أخدت لحظة وعملت كده')}</button>`;}
+  else if(id==='opposite'){
+    h=`<p class="step-q">${L('Practice opposite action.','اعمل العكس.')}</p>
+    <p class="step-h">${L('Fighting reality urges you to tense up, avoid, or lash out. The opposite is to <i>act as if you’ve already accepted it</i>. What would “acting accepted” look like right now?','محاربة الواقع بتدفعك تتشنّج أو تتجنّب أو تهجم. العكس هو إنك <i>تتصرّف كأنك متقبّله خلاص</i>. «التصرف كأنك متقبّل» هيبقى شكله إيه دلوقتي؟')}</p>
+    <textarea placeholder="${L('If I’d already accepted this, I would…','لو كنت متقبّل ده خلاص، كنت هـ…')}" oninput="ra.opposite=this.value">${ra.opposite||''}</textarea>`;}
+  else if(id==='cope'){
+    h=`<p class="step-q">${L('Cope ahead.','استعد مسبقًا.')}</p>
+    <p class="step-h">${L('Picture this reality continuing, or coming up again. Rehearse handling it skilfully.','تخيّل الواقع ده مستمر، أو بييجي تاني. اتمرّن إنك تتعامل معاه بمهارة.')}</p>
+    <textarea placeholder="${L('If it stays this way / happens again, I’ll cope by…','لو فضل كده / حصل تاني، هتعامل بـ…')}" oninput="ra.copeAhead=this.value">${ra.copeAhead||''}</textarea>`;}
+  else if(id==='body'){
+    h=`<p class="step-q">${L('Attend to the body.','اهتم بالجسم.')}</p>
+    <p class="step-h">${L('Where do you feel the resistance or the pain? Notice it without fighting it.','بتحس بالمقاومة أو الألم فين في جسمك؟ لاحظه من غير ما تحاربه.')}</p>
+    <div class="chips">`+BODY.map(l=>`<button class="${ra.bodyChips.includes(l[0])?'on':''}" onclick="raChip('${l[0]}')">${L(l[0],l[1])}</button>`).join('')+`</div>
+    <textarea placeholder="${L('Anything else you notice in your body…','أي حاجة تانية بتلاحظها في جسمك…')}" oninput="ra.bodyText=this.value">${ra.bodyText||''}</textarea>`;}
+  else if(id==='grief'){
+    h=`<p class="step-q">${L('Allow the feelings to rise.','سيب المشاعر تطلع.')}</p>
+    <p class="step-h">${L('When you stop fighting, disappointment, sadness or grief often come. Let them be here — they’re part of accepting.','لما تبطّل تحارب، بييجي إحباط أو حزن أو أسى. سيبهم يكونوا موجودين — دول جزء من التقبّل.')}</p>
+    <textarea placeholder="${L('What rises when I stop fighting…','اللي بيطلع لما أبطّل أحارب…')}" oninput="ra.grief=this.value">${ra.grief||''}</textarea>`;}
+  else if(id==='worth'){
+    h=`<p class="step-q">${L('Life can be worth living, even with pain.','الحياة ممكن تستاهل، حتى مع الألم.')}</p>
+    <p class="step-h">${L('Name something that still makes life worth living — even now, even small.','سمّي حاجة لسه بتخلي الحياة تستاهل — حتى دلوقتي، حتى لو صغيرة.')}</p>
+    <textarea placeholder="${L('Even with this, life is still worth living because…','حتى مع ده، الحياة لسه تستاهل عشان…')}" oninput="ra.worth=this.value">${ra.worth||''}</textarea>`;}
+  else if(id==='proscons'){
+    h=`<p class="step-q">${L('Pros and cons.','المميزات والعيوب.')}</p>
+    <p class="step-h">${L('Weigh accepting reality against resisting it.','وازن بين إنك تتقبّل الواقع وبين إنك تقاومه.')}</p>
+    <div class="lab">${L('Pros of accepting reality','مميزات إنك تتقبّل الواقع')}</div>
+    <textarea placeholder="${L('What I gain by accepting…','اللي بكسبه لما أتقبّل…')}" oninput="ra.pros=this.value">${ra.pros||''}</textarea>
+    <div class="lab">${L('Cons of resisting / refusing to accept','عيوب إنك تقاوم / ترفض التقبّل')}</div>
+    <textarea placeholder="${L('What it costs me to keep fighting it…','اللي بيكلّفني إني أفضل أحارب…')}" oninput="ra.cons=this.value">${ra.cons||''}</textarea>`;}
+  else if(id==='summary'){
+    state.skills['3_4']=true;state.skills['3_2']=true;save();  // Radical Acceptance + Pros and Cons
+    h=`<p class="step-q">${L('Here’s your reflection','دي خلاصتك')}</p>
+    <div class="sumbox">${raSummary().replace(/</g,'&lt;')}</div>
+    <button class="ctfopen" style="background:var(--accent2)" onclick="raToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+    <button class="canttell" onclick="raShare()">${L('📲 Send this to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>
+    <button class="canttell" onclick="navigator.clipboard.writeText(raSummary()).then(()=>toast(t('copied')))">${L('📋 Copy','📋 نسخ')}</button>`;
+    raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raClose()">${L('Done','تمام')}</button>`);
+    return done(h);
+  }
+  raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raNext()">${L('Next ▸','التالي ▸')}</button>`);
+  done(h);
+  function done(html){document.getElementById('raBody').innerHTML=html;}
+}
+
+function raSummary(){
+  const sep=LANG==='ar'?'، ':', ';
+  const O=[L('🌳 Radical Acceptance — ','🌳 القبول الجذري — ')+pretty(curKey)];
+  const add=(lab,v)=>{if(v&&String(v).trim())O.push('\n'+lab+': '+String(v).trim());};
+  add(L('Reality I’m accepting','الواقع اللي بتقبله'),ra.reality);
+  add(L('In my own words','بكلامي أنا'),ra.ownWords);
+  add(L('Causes','الأسباب'),ra.causes);
+  if(ra.wholeSelf)O.push('\n'+L('Practised accepting with the whole self (breath / half-smile / willing hands).','اتمرّنت على التقبّل بكل الكيان (نفس / نص ابتسامة / أيدي متقبلة).'));
+  add(L('Opposite action','التصرف العكسي'),ra.opposite);
+  add(L('Cope ahead','الاستعداد المسبق'),ra.copeAhead);
+  const body=[...(ra.bodyChips||[]).map(x=>locItem(BODY,x)),ra.bodyText].filter(x=>x&&String(x).trim()).join(sep);
+  add(L('Body sensations','أحاسيس الجسم'),body);
+  add(L('Feelings I let rise','المشاعر اللي سيبتها تطلع'),ra.grief);
+  add(L('Still worth living','لسه تستاهل'),ra.worth);
+  add(L('Pros of accepting','مميزات التقبّل'),ra.pros);
+  add(L('Cons of resisting','عيوب المقاومة'),ra.cons);
+  return O.join('\n');
+}
+function raToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+raSummary();
+  save();render();toast(t('addedNotes'));raClose();}
+function raShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');
+  location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(raSummary());}
+
+curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
 </script>
 </body>
