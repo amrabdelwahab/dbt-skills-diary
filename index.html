@@ -238,13 +238,14 @@ function shiftKey(k,d){const dt=keyToDate(k);dt.setDate(dt.getDate()+d);
   return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
 
 /* ---------- views ---------- */
-function showDay(){document.getElementById('dayView').style.display='';
+function showDay(){if(location.hash)history.replaceState(null,'','./');document.getElementById('dayView').style.display='';
   document.getElementById('archiveView').style.display='none';
   document.getElementById('dayBar').style.display='flex';
   document.getElementById('archiveBar').style.display='none';
   document.getElementById('title').textContent='DBT Skills Diary';
   curKey=defaultKey();load();window.scrollTo(0,0);}
 function showArchive(){closeMenu();
+  if(location.hash!=='#archive')history.replaceState(null,'','#archive');
   document.getElementById('dayView').style.display='none';
   document.getElementById('archiveView').style.display='';
   document.getElementById('dayBar').style.display='none';
@@ -328,6 +329,7 @@ let tT;function toast(m){const t=document.getElementById('toast');t.textContent=
   clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);}
 
 curKey=defaultKey();load();gate();
+if(location.hash==='#archive')showArchive();
 </script>
 </body>
 </html>
