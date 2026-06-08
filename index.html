@@ -46,8 +46,14 @@
   .box{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--muted);
     display:grid;place-items:center;font-size:15px;color:#fff;transition:.12s}
   .skill.on .box{background:var(--accent2);border-color:var(--accent2)}
-  .skill .name{font-size:15px;font-weight:600}
+  .skill .name{font-size:15px;font-weight:600;flex:1;min-width:0}
   .skill .sub{display:block;font-size:12px;color:var(--muted);font-weight:400}
+  .skillrow{display:flex;gap:8px;margin:7px 0}
+  .skillrow .skill{flex:1;margin:0}
+  .skillgo{flex:none;width:52px;border:1px solid var(--line);border-radius:12px;cursor:pointer;
+    background:var(--card2);color:var(--accent);font-size:28px;line-height:1;font-weight:400;
+    display:flex;align-items:center;justify-content:center}
+  .skillgo:active{background:var(--accent);color:#fff}
   .bar{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#0b1220ee;backdrop-filter:blur(10px);
     border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));
     display:flex;gap:8px;max-width:640px;margin:0 auto}
@@ -118,9 +124,11 @@
   .alert{background:#3b1d1d;border:1px solid #7f1d1d;border-radius:12px;padding:16px;margin:6px 0 2px}
   .alert h3{margin:0 0 8px;font-size:16px;color:#fca5a5}
   .alert ul{margin:8px 0 0;padding-left:18px}.alert li{margin:5px 0}
-  .ctf .nav{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);
-    display:flex;gap:10px;max-width:640px;margin:0 auto;width:100%}
-  .ctf .nav button{flex:1;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:700}
+  .ctf .nav{border-top:1px solid var(--line);padding:0}
+  .ctf .navin{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto;width:100%;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+  .ctf .nav button{flex:1;border:0;border-radius:12px;padding:0;height:52px;line-height:1;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
   .ctf .nav .back{background:var(--card2);color:var(--ink);flex:0 0 90px}
   .ctf .nav .next{background:var(--accent);color:#fff}
   .fitbtn{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
@@ -164,7 +172,6 @@
     <h2>Notes for my therapist</h2>
     <textarea id="notes" placeholder="Anything you want to add — urges, wins, what was hard…"></textarea>
   </div>
-  <button class="ctfopen" onclick="openCTF()">🧭 Check the Facts — guided walkthrough</button>
 </div>
 
 <div class="wrap" id="archiveView" style="display:none">
@@ -200,7 +207,7 @@
 <div class="ctf" id="ctf">
   <div class="top">
     <button class="x" onclick="closeCTF()">✕</button>
-    <h2>Check the Facts</h2>
+    <h2 id="ctfTitle">Check the Facts</h2>
   </div>
   <div class="prog"><i id="ctfProg"></i></div>
   <div class="body" id="ctfBody"></div>
@@ -282,8 +289,12 @@ function render(){
     html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
       <h3>${g.name}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
     g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';
-      html+=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
-        <div class="name">${s[0]}${s[1]?`<span class="sub">${s[1]}</span>`:''}</div></div>`;});
+      const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
+        <div class="name">${s[0]}${s[1]?`<span class="sub">${s[1]}</span>`:''}</div></div>`;
+      if(s[0]==='Check the facts'||s[0]==='Describing emotions'){
+        html+=`<div class="skillrow">${row}<button class="skillgo" aria-label="Open guided walkthrough" onclick="launchCTF('${id}')">❯</button></div>`;
+      } else { html+=row; }
+    });
   });
   document.getElementById('skills').innerHTML=html;
   document.getElementById('notes').value=state.notes||'';
@@ -387,14 +398,15 @@ let tT;function toast(m){const t=document.getElementById('toast');t.textContent=
   clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1800);}
 
 /* ===================== Check the Facts (guided) ===================== */
-const PRIMARY=['Anger','Fear','Sadness','Shame','Guilt','Disgust','Envy','Jealousy','Love','Happiness'];
+const PRIMARY=['Fear','Sadness','Shame','Guilt','Happiness','Disgust','Anger'];
 const BODY=['Tight chest','Racing heart','Hot / flushed','Tense muscles','Shaky','Stomach knot','Heavy','Short of breath','Restless','Numb'];
 const URGES=['Withdraw / hide','Lash out','Run / escape','Cry','Shut down','Avoid it','Seek reassurance','Apologize','Check / control','Numb out'];
 const ORDER=['intro','emotion','intensity','event','interp','body','urges','threat','catastrophe','fit','summary'];
 let ctf={};
 
 function openCTF(){ctf={step:'intro',bodyChips:[],urgeChips:[]};document.getElementById('ctf').classList.add('show');renderCTF();}
-function closeCTF(){document.getElementById('ctf').classList.remove('show');}
+function launchCTF(id){state.skills[id]=true;save();render();openCTF();}
+function closeCTF(){document.getElementById('ctf').classList.remove('show');render();}
 function gotoStep(s){ctf.step=s;renderCTF();document.getElementById('ctfBody').scrollTop=0;}
 function triggered(){return ctf.cantTell||ctf.intensity>=8;}
 
@@ -402,25 +414,27 @@ function ctfNext(){
   const s=ctf.step;
   if(s==='emotion'&&!ctf.emotion){return toast('Pick an emotion first');}
   if(s==='intensity'&&ctf.intensity==null&&!ctf.cantTell){return toast('Tap a number, or “Can’t tell”');}
-  if(s==='intensity'){return gotoStep(triggered()?'dt':'event');}
+  if(s==='intensity'){if(triggered()){ctf.dtFrom='intensity';return gotoStep('dt');}return gotoStep('event');}
   if(s==='dt'){return gotoStep('event');}
   const i=ORDER.indexOf(s); if(i>=0&&i<ORDER.length-1)gotoStep(ORDER[i+1]);
 }
 function ctfPrev(){
   const s=ctf.step;
-  if(s==='dt')return gotoStep('intensity');
-  if(s==='event')return gotoStep(triggered()?'dt':'intensity');
+  if(s==='dt')return gotoStep(ctf.dtFrom||'intensity');
+  if(s==='event')return gotoStep((triggered()||ctf.cantName)?'dt':'intensity');
   const i=ORDER.indexOf(s); if(i>0)gotoStep(ORDER[i-1]); else closeCTF();
 }
-function ctfEmo(n){ctf.emotion=n;renderCTF();}
+function ctfEmo(n){ctf.emotion=n;ctf.cantName=false;renderCTF();}
+function ctfCantName(){ctf.cantName=true;ctf.emotion=null;ctf.dtFrom='emotion';gotoStep('dt');}
 function ctfInt(n){ctf.intensity=n;ctf.cantTell=false;renderCTF();}
 function ctfCant(){ctf.cantTell=!ctf.cantTell;ctf.intensity=null;renderCTF();}
 function ctfChip(field,label){const a=ctf[field];const i=a.indexOf(label);i>=0?a.splice(i,1):a.push(label);renderCTF();}
 function ctfFit(v){ctf.fit=v;renderCTF();}
 
+function setNav(html){document.getElementById('ctfNav').innerHTML=`<div class="navin">${html}</div>`;}
 function nav(extra){
   const back=`<button class="back" onclick="ctfPrev()">Back</button>`;
-  document.getElementById('ctfNav').innerHTML=back+(extra||`<button class="next" onclick="ctfNext()">Next ▸</button>`);
+  setNav(back+(extra||`<button class="next" onclick="ctfNext()">Next ▸</button>`));
 }
 function chips(field,list){return `<div class="chips">`+list.map(l=>
   `<button class="${ctf[field].includes(l)?'on':''}" onclick="ctfChip('${field}','${l}')">${l}</button>`).join('')+`</div>`;}
@@ -429,16 +443,20 @@ function renderCTF(){
   const b=document.getElementById('ctfBody'); const s=ctf.step;
   const idx=Math.max(0,ORDER.indexOf(s==='dt'?'intensity':s));
   document.getElementById('ctfProg').style.width=(idx/(ORDER.length-1)*100)+'%';
+  const CHECK=['threat','catastrophe','fit'];
+  document.getElementById('ctfTitle').textContent =
+    (s==='intro'||s==='summary')?'Describe + Check the Facts':CHECK.includes(s)?'Check the Facts':'Describe the Emotion';
   let h='';
   if(s==='intro'){
-    h=`<p class="step-q">Let’s check the facts.</p>
-    <p class="step-h">A DBT skill (Linehan) to see whether an emotion — and how strong it is — actually fits the situation, or fits your <i>interpretation</i> of it. Takes a few minutes. Nothing is sent anywhere unless you choose to at the end.</p>`;
-    document.getElementById('ctfNav').innerHTML=`<button class="next" onclick="ctfNext()">Start ▸</button>`;
+    h=`<p class="step-q">Describe the emotion, then check the facts.</p>
+    <p class="step-h">Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.</p>`;
+    setNav(`<button class="next" onclick="ctfNext()">Start ▸</button>`);
   }
   else if(s==='emotion'){
     h=`<p class="step-q">What is the emotion you want to check?</p>
     <p class="step-h">Pick the one that fits best. (DBT primary emotions.)</p>
     <div class="emogrid">`+PRIMARY.map(e=>`<button class="${ctf.emotion===e?'on':''}" onclick="ctfEmo('${e}')">${e}</button>`).join('')+`</div>
+    <button class="canttell ${ctf.cantName?'on':''}" onclick="ctfCantName()">I can’t name what I’m feeling</button>
     <div class="lab">A more specific word for it (optional)</div>
     <input class="canttell" style="text-align:left" placeholder="e.g. resentful, anxious, humiliated…" value="${ctf.emotionWord||''}" oninput="ctf.emotionWord=this.value">`;
     nav();
@@ -517,12 +535,13 @@ function renderCTF(){
     nav();
   }
   else if(s==='summary'){
-    h=`<p class="step-q">Here’s your Check the Facts</p>
+    state.skills['2_0']=true;state.skills['2_1']=true;save();  // Describing emotions + Check the facts both practiced
+    h=`<p class="step-q">Here’s your reflection</p>
     <div class="sumbox">${ctfSummary().replace(/</g,'&lt;')}</div>
     <button class="ctfopen" style="background:var(--accent2)" onclick="ctfToNotes()">＋ Add to ${curKey===todayKey()?'today':'this day'}’s notes</button>
     <button class="canttell" onclick="ctfShare()">📲 Send this to my therapist (WhatsApp)</button>
     <button class="canttell" onclick="navigator.clipboard.writeText(ctfSummary()).then(()=>toast('Copied ✓'))">📋 Copy</button>`;
-    document.getElementById('ctfNav').innerHTML=`<button class="back" onclick="ctfPrev()">Back</button><button class="next" onclick="closeCTF()">Done</button>`;
+    setNav(`<button class="back" onclick="ctfPrev()">Back</button><button class="next" onclick="closeCTF()">Done</button>`);
     b.innerHTML=h;return;
   }
   b.innerHTML=h;
@@ -530,7 +549,7 @@ function renderCTF(){
 
 function ctfSummary(){
   const L=[]; L.push('🧭 Check the Facts — '+pretty(curKey));
-  let e=ctf.emotion||'—'; if(ctf.emotionWord)e+=' ('+ctf.emotionWord+')';
+  let e=ctf.cantName?'couldn’t name it':(ctf.emotion||'—'); if(ctf.emotionWord)e+=' ('+ctf.emotionWord+')';
   L.push('Emotion: '+e+'  ·  Intensity: '+(ctf.cantTell?'hard to tell':(ctf.intensity!=null?ctf.intensity+'/10':'—')));
   const add=(t,v)=>{if(v&&String(v).trim())L.push('\n'+t+': '+String(v).trim());};
   add('What happened (just the facts)',ctf.event);
