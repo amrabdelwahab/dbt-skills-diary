@@ -312,6 +312,7 @@ const T = {
   installText:['Add this to your home screen for one-tap access','أضِفها لشاشتك الرئيسية للوصول السريع'],
   installYes:['Add','إضافة'],
   installManual:['Open your browser menu (⋮) → “Add to Home screen”','افتح قائمة المتصفح (⋮) ← «إضافة إلى الشاشة الرئيسية»'],
+  installIOS:['On iPhone: tap the Share button, then “Add to Home Screen”','على الآيفون: دوس زر المشاركة، وبعدين «إضافة إلى الشاشة الرئيسية»'],
   installed:['Already added ✓','مضافة بالفعل ✓'],
   lockTitle:['🔒 DBT Diary','🔒 مذكرة DBT'],
   lockHint:['Enter your passcode','اكتب رمز القفل'],
@@ -364,6 +365,7 @@ function applyLang(){
   buildMenu();
   if(view==='archive'){showArchive();}
   else{document.getElementById('title').textContent=t('appTitle');render();}
+  maybeShowInstall();
 }
 function toggleLang(){LANG=LANG==='ar'?'en':'ar';cfg.lang=LANG;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));applyLang();}
 function buildMenu(){
@@ -824,10 +826,16 @@ function raShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');
 /* ---------- install / add to home screen ---------- */
 let deferredPrompt=null;
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
-function maybeShowInstall(){if(deferredPrompt&&!isStandalone())document.getElementById('installBar').classList.add('show');}
-function hideInstall(){document.getElementById('installBar').classList.remove('show');}
-async function doInstall(){if(!deferredPrompt){toast(t('installManual'));return;}deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;hideInstall();}
-function menuInstall(){closeMenu();if(deferredPrompt)doInstall();else toast(isStandalone()?t('installed'):t('installManual'));}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+function maybeShowInstall(){
+  if(cfg.hideInstall||isStandalone())return;
+  const bar=document.getElementById('installBar'),yes=document.getElementById('installYes');
+  if(deferredPrompt){yes.style.display='';document.getElementById('installText').textContent=t('installText');bar.classList.add('show');}
+  else if(isIOS()){yes.style.display='none';document.getElementById('installText').textContent=t('installIOS');bar.classList.add('show');}
+}
+function hideInstall(){cfg.hideInstall=true;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));document.getElementById('installBar').classList.remove('show');}
+async function doInstall(){if(!deferredPrompt){toast(isIOS()?t('installIOS'):t('installManual'));return;}deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;hideInstall();}
+function menuInstall(){closeMenu();if(deferredPrompt)return doInstall();toast(isStandalone()?t('installed'):isIOS()?t('installIOS'):t('installManual'));}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;maybeShowInstall();});
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;hideInstall();});
 
