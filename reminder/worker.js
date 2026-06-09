@@ -23,7 +23,8 @@ export default {
       const rec = {
         sub,
         time: typeof body.time === 'string' ? body.time : '09:00',  // HH:MM, user's local time
-        tz: Number.isInteger(body.tz) ? body.tz : 0,                // minutes offset from UTC (e.g. +180 for Cairo)
+        tz: Number.isInteger(body.tz) ? body.tz : 0,                // fallback fixed offset (minutes from UTC)
+        tzName: typeof body.tzName === 'string' ? body.tzName : '', // IANA zone, e.g. "Africa/Cairo" (DST-proof)
         lang: body.lang === 'ar' ? 'ar' : 'en',
       };
       const id = await sha(sub.endpoint);

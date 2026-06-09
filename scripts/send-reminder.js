@@ -20,21 +20,34 @@ function payload(lang) {
   return JSON.stringify(m);
 }
 
+// Current local time (minutes since midnight) + date (YYYY-MM-DD) in the user's zone.
+// Prefers the IANA zone name (DST-proof, travel-proof); falls back to a fixed offset.
+function localParts(rec) {
+  if (rec.tzName) {
+    try {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+        timeZone: rec.tzName, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(new Date()).map(x => [x.type, x.value]));
+      return { minutes: (Number(p.hour) % 24) * 60 + Number(p.minute), date: `${p.year}-${p.month}-${p.day}` };
+    } catch (_) { /* fall through to offset */ }
+  }
+  const tz = Number.isInteger(rec.tz) ? rec.tz : 0;
+  const local = new Date(Date.now() + tz * 60000);
+  return { minutes: local.getUTCHours() * 60 + local.getUTCMinutes(), date: local.toISOString().slice(0, 10) };
+}
+
 (async () => {
   const res = await fetch(`${WORKER}/list?key=${SECRET}`);
   if (!res.ok) { console.error('list failed', res.status); process.exit(1); }
   const list = await res.json();
-  const now = Date.now();
   let sent = 0, due = 0;
 
   for (const item of list) {
     const rec = item.sub || {};
     const sub = rec.sub || rec;
     if (!sub || !sub.endpoint) continue;
-    const tz = Number.isInteger(rec.tz) ? rec.tz : 0;
-    const local = new Date(now + tz * 60000);
-    const lm = local.getUTCHours() * 60 + local.getUTCMinutes();
-    const dateStr = local.toISOString().slice(0, 10);
+    const { minutes: lm, date: dateStr } = localParts(rec);
     const [th, tmm] = String(rec.time || '09:00').split(':').map(Number);
     const target = th * 60 + tmm;
 
