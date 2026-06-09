@@ -48,6 +48,14 @@ export default {
       return j(out);
     }
 
+    if (url.pathname === '/unsubscribe' && req.method === 'POST') {
+      // Public: you can only delete your own record (you must know your endpoint).
+      let body; try { body = await req.json(); } catch { body = {}; }
+      const ep = body.endpoint || (body.sub && body.sub.endpoint);
+      if (ep) await env.SUBS.delete(await sha(ep));
+      return j({ ok: true });
+    }
+
     if (url.pathname === '/remove' && req.method === 'POST') {
       if (url.searchParams.get('key') !== env.LIST_SECRET) return j({ error: 'forbidden' }, 403);
       let body; try { body = await req.json(); } catch { body = {}; }

@@ -310,7 +310,11 @@ const T = {
   remTitle:['Daily reminder','التذكير اليومي'],
   remHint:['Pick a time to be reminded each day to fill your diary.','اختار وقت يفكّرك كل يوم تملا المذكرة.'],
   remEnable:['Enable reminder','فعّل التذكير'],
+  remUpdate:['Update reminder','تحديث التذكير'],
+  remOff:['Turn off reminder','إيقاف التذكير'],
+  remOnAt:['Reminder is on at','التذكير شغّال الساعة'],
   pushOn:['Reminder enabled ✓','اتفعّل التذكير ✓'],
+  pushOff:['Reminder turned off','اتقفل التذكير'],
   pushBlocked:['Notifications are blocked — allow them in your browser settings','الإشعارات مرفوضة — فعّلها من إعدادات المتصفح'],
   pushUnsupported:['Push notifications aren’t supported on this browser','الإشعارات مش مدعومة في المتصفح ده'],
   pushErr:['Couldn’t enable: ','مش قادر أفعّل: '],
@@ -857,15 +861,25 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 const WORKER_URL='https://dbt-diary-reminder.amrabdelwahab.workers.dev';
 const VAPID_PUBLIC='BHw5X_AeAf4KDA1ylK313KCurAAMsyfXhX5XDh-C73sOUqDHumfL6xyYY-IUwH_PC6taW5gGRDqMfw4EBya_rkA';
 function urlB64ToUint8(b){const pad='='.repeat((4-b.length%4)%4);const s=(b+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
-function openRem(){closeMenu();const v=cfg.remTime||'09:00';
+function openRem(){closeMenu();const v=cfg.remTime||'09:00';const on=!!cfg.remOn;
   document.getElementById('remSheet').innerHTML=
     `<h2 style="margin:6px 4px 2px;font-size:18px">${t('remTitle')}</h2>
-     <p class="hint" style="margin:0 4px 14px">${t('remHint')}</p>
+     <p class="hint" style="margin:0 4px 14px">${on?(t('remOnAt')+' '+v):t('remHint')}</p>
      <input type="time" id="remTime" value="${v}" style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);padding:14px;border-radius:10px;font:inherit;font-size:20px;text-align:center;margin-bottom:12px">
-     <button onclick="enablePush()" style="display:block;width:100%;background:var(--accent2);color:#04331a;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:800;margin-bottom:8px">${t('remEnable')}</button>
+     <button onclick="enablePush()" style="display:block;width:100%;background:var(--accent2);color:#04331a;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:800;margin-bottom:8px">${on?t('remUpdate'):t('remEnable')}</button>
+     ${on?`<button onclick="disablePush()" style="display:block;width:100%;background:#3b1d1d;color:#fca5a5;border:1px solid #7f1d1d;border-radius:12px;padding:13px;font-size:15px;font-weight:700;margin-bottom:8px">${t('remOff')}</button>`:''}
      <button onclick="closeRem()" style="display:block;width:100%;background:var(--card2);color:var(--ink);border:0;border-radius:12px;padding:13px;font-size:15px">${t('mClose')}</button>`;
   document.getElementById('remMenu').classList.add('show');}
 function closeRem(){document.getElementById('remMenu').classList.remove('show');}
+async function disablePush(){
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub){await fetch(WORKER_URL+'/unsubscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe();}
+    cfg.remOn=false;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));
+    closeRem();toast(t('pushOff'));
+  }catch(e){toast(t('pushErr')+(e.message||''));}
+}
 async function enablePush(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){return toast(t('pushUnsupported'));}
   if(isIOS()&&!isStandalone()){closeRem();return toast(t('pushIOSInstall'));}
@@ -878,10 +892,10 @@ async function enablePush(){
     const time=(document.getElementById('remTime')||{}).value||'09:00';
     const tz=-new Date().getTimezoneOffset();  // fallback fixed offset
     let tzName='';try{tzName=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(_){}
-    cfg.remTime=time;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));
     const r=await fetch(WORKER_URL+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({sub:sub.toJSON?sub.toJSON():sub,time,tz,tzName,lang:LANG})});
     if(!r.ok)throw new Error('server '+r.status);
+    cfg.remTime=time;cfg.remOn=true;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));
     closeRem();toast(t('pushOn'));
   }catch(e){toast(t('pushErr')+(e.message||''));}
 }
