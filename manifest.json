@@ -1,6 +1,6 @@
 {
   "name": "DBT Skills Diary",
-  "short_name": "Diary",
+  "short_name": "DBT Diary",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
