@@ -615,7 +615,7 @@ function ctfFit(v){ctf.fit=v;renderCTF();}
 function setNav(html){document.getElementById('ctfNav').innerHTML=`<div class="navin">${html}</div>`;}
 function nav(extra){
   const back=`<button class="back" onclick="ctfPrev()">${L('Back','رجوع')}</button>`;
-  setNav(back+(extra||`<button class="next" onclick="ctfNext()">${L('Next ▸','◂ التالي')}</button>`));
+  setNav(back+(extra||`<button class="next" onclick="ctfNext()">${L('Next ▸','التالي ◂')}</button>`));
 }
 function chips(field,list){return `<div class="chips">`+list.map(l=>
   `<button class="${ctf[field].includes(l[0])?'on':''}" onclick="ctfChip('${field}','${l[0]}')">${L(l[0],l[1])}</button>`).join('')+`</div>`;}
@@ -632,7 +632,7 @@ function renderCTF(){
   if(s==='intro'){
     h=`<p class="step-q">${L('Describe the emotion, then check the facts.','اوصف المشاعر، وبعدين راجع الحقائق.')}</p>
     <p class="step-h">${L('Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.','مهارتين DBT في واحدة. الأول <b>توصف المشاعر</b> — إيه اللي حصل، أحاسيس الجسم، الرغبات. وبعدين <b>تراجع الحقائق</b> — هل الشعور، وقد إيه هو قوي، فعلاً مناسب للموقف، ولا مناسب لـ<i>تفسيرك</i> ليه؟ دقايق قليلة. مفيش حاجة بتتبعت لحد إلا لو اخترت في الآخر.')}</p>`;
-    setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','◂ ابدأ')}</button>`);
+    setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','ابدأ ◂')}</button>`);
   }
   else if(s==='emotion'){
     h=`<p class="step-q">${L('What is the emotion you want to check?','إيه الشعور اللي عايز تراجعه؟')}</p>
@@ -660,7 +660,7 @@ function renderCTF(){
         <li>${L('<b>Distract & Self-soothe</b> — change activity; soothe your five senses','<b>التشتيت وتهدئة الذات</b> — غيّر النشاط؛ هدّي حواسك الخمسة')}</li>
       </ul></div>
     <p class="step-h">${L('Come back when you’re at roughly a 7 or below. You can continue now if you want, but it may be harder.','ارجع لما تبقى عند ٧ أو أقل. تقدر تكمّل دلوقتي لو حابب، بس ممكن يبقى أصعب.')}</p>`;
-    nav(`<button class="next" onclick="ctfNext()">${L('I’ve eased it — continue ▸','◂ خفّفتها — كمّل')}</button>`);
+    nav(`<button class="next" onclick="ctfNext()">${L('I’ve eased it — continue ▸','خفّفتها — كمّل ◂')}</button>`);
   }
   else if(s==='event'){
     h=`<p class="step-q">${L('What actually happened?','إيه اللي حصل فعلاً؟')}</p>
@@ -783,7 +783,7 @@ function raRender(){
   if(id==='intro'){
     h=`<p class="step-q">${L('🌳 Radical Acceptance','🌳 القبول الجذري')}</p>
     <p class="step-h">${L('Accepting reality fully — <b>as it is, right now</b> — when it isn’t the life you want. It is <b>not</b> approval, <b>not</b> love, <b>not</b> giving up, and <b>not</b> being against change. It’s letting go of the <i>fight</i> with reality, so you stop adding suffering on top of pain.','إنك تتقبّل الواقع بالكامل — <b>زي ما هو دلوقتي</b> — حتى لو مش الحياة اللي عايزها. هو <b>مش</b> موافقة، <b>مش</b> حب، <b>مش</b> استسلام، و<b>مش</b> ضد التغيير. هو إنك تبطّل <i>تتعارك</i> مع الواقع، عشان متزوّدش معاناة فوق الألم.')}</p>`;
-    raSetNav(`<button class="next" onclick="raNext()">${L('Start ▸','◂ ابدأ')}</button>`);return done(h);
+    raSetNav(`<button class="next" onclick="raNext()">${L('Start ▸','ابدأ ◂')}</button>`);return done(h);
   }
   if(id==='observe'){
     h=`<p class="step-q">${L('What reality are you fighting?','إيه الواقع اللي بتحاربه؟')}</p>
@@ -839,7 +839,7 @@ function raRender(){
     raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raClose()">${L('Done','تمام')}</button>`);
     return done(h);
   }
-  raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raNext()">${L('Next ▸','◂ التالي')}</button>`);
+  raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raNext()">${L('Next ▸','التالي ◂')}</button>`);
   done(h);
   function done(html){document.getElementById('raBody').innerHTML=html;}
 }
