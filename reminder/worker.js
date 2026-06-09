@@ -54,6 +54,16 @@ export default {
       return j({ ok: true });
     }
 
+    if (url.pathname === '/sent' && req.method === 'POST') {
+      if (url.searchParams.get('key') !== env.LIST_SECRET) return j({ error: 'forbidden' }, 403);
+      let body; try { body = await req.json(); } catch { body = {}; }
+      if (body.id) {
+        const v = await env.SUBS.get(body.id);
+        if (v) { const rec = JSON.parse(v); rec.lastSent = body.date; await env.SUBS.put(body.id, JSON.stringify(rec)); }
+      }
+      return j({ ok: true });
+    }
+
     return new Response('DBT reminder worker', { headers: CORS });
   },
 };

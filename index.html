@@ -212,6 +212,10 @@
   <div class="sheet" id="menuSheet"></div>
 </div>
 
+<div class="menu" id="remMenu" onclick="if(event.target.id==='remMenu')closeRem()">
+  <div class="sheet" id="remSheet"></div>
+</div>
+
 <!-- Check the Facts guided wizard -->
 <div class="ctf" id="ctf">
   <div class="top">
@@ -302,7 +306,15 @@ const T = {
   mCopy:['📋 Copy this day as text','📋 نسخ اليوم كنص'],
   mWa:["👤 Set therapist's WhatsApp number",'👤 رقم واتساب المعالج'],
   mEmail:["✉️ Set therapist's email",'✉️ إيميل المعالج'],
-  mReminder:['⏰ Add daily reminder (download .ics)','⏰ تذكير يومي (تنزيل .ics)'],
+  mReminder:['🔔 Daily reminder','🔔 تذكير يومي'],
+  remTitle:['Daily reminder','التذكير اليومي'],
+  remHint:['Pick a time to be reminded each day to fill your diary.','اختار وقت يفكّرك كل يوم تملا المذكرة.'],
+  remEnable:['Enable reminder','فعّل التذكير'],
+  pushOn:['Reminder enabled ✓','اتفعّل التذكير ✓'],
+  pushBlocked:['Notifications are blocked — allow them in your browser settings','الإشعارات مرفوضة — فعّلها من إعدادات المتصفح'],
+  pushUnsupported:['Push notifications aren’t supported on this browser','الإشعارات مش مدعومة في المتصفح ده'],
+  pushErr:['Couldn’t enable: ','مش قادر أفعّل: '],
+  pushIOSInstall:['On iPhone: add to Home Screen first, then open the app and enable.','على الآيفون: ضيف للشاشة الرئيسية الأول، وبعدين افتح التطبيق وفعّل.'],
   mSetPin:['🔑 Set / change passcode','🔑 تعيين / تغيير رمز القفل'],
   mRemovePin:['🔓 Remove passcode','🔓 إزالة رمز القفل'],
   mExport:['⬇️ Export backup (all days)','⬇️ نسخة احتياطية (كل الأيام)'],
@@ -370,7 +382,7 @@ function applyLang(){
 function toggleLang(){LANG=LANG==='ar'?'en':'ar';cfg.lang=LANG;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));applyLang();}
 function buildMenu(){
   const items=[['mInstall','menuInstall()'],['mArchive','showArchive()'],['mCopy',"share('copy')"],['mWa','setTherapist()'],['mEmail','setEmail()'],
-    ['mReminder','reminder()'],['mSetPin','setPin()'],['mRemovePin','removePin()'],['mExport','exportAll()'],
+    ['mReminder','openRem()'],['mSetPin','setPin()'],['mRemovePin','removePin()'],['mExport','exportAll()'],
     ['mImport','importAll()'],['mClose','closeMenu()']];
   document.getElementById('menuSheet').innerHTML=items.map(([k,fn])=>`<button onclick="${fn}">${t(k)}</button>`).join('');
 }
@@ -840,6 +852,38 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;hideInstall();});
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+/* ---------- daily push reminder ---------- */
+const WORKER_URL='https://dbt-diary-reminder.amrabdelwahab.workers.dev';
+const VAPID_PUBLIC='BHw5X_AeAf4KDA1ylK313KCurAAMsyfXhX5XDh-C73sOUqDHumfL6xyYY-IUwH_PC6taW5gGRDqMfw4EBya_rkA';
+function urlB64ToUint8(b){const pad='='.repeat((4-b.length%4)%4);const s=(b+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
+function openRem(){closeMenu();const v=cfg.remTime||'09:00';
+  document.getElementById('remSheet').innerHTML=
+    `<h2 style="margin:6px 4px 2px;font-size:18px">${t('remTitle')}</h2>
+     <p class="hint" style="margin:0 4px 14px">${t('remHint')}</p>
+     <input type="time" id="remTime" value="${v}" style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);padding:14px;border-radius:10px;font:inherit;font-size:20px;text-align:center;margin-bottom:12px">
+     <button onclick="enablePush()" style="display:block;width:100%;background:var(--accent2);color:#04331a;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:800;margin-bottom:8px">${t('remEnable')}</button>
+     <button onclick="closeRem()" style="display:block;width:100%;background:var(--card2);color:var(--ink);border:0;border-radius:12px;padding:13px;font-size:15px">${t('mClose')}</button>`;
+  document.getElementById('remMenu').classList.add('show');}
+function closeRem(){document.getElementById('remMenu').classList.remove('show');}
+async function enablePush(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){return toast(t('pushUnsupported'));}
+  if(isIOS()&&!isStandalone()){closeRem();return toast(t('pushIOSInstall'));}
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted')return toast(t('pushBlocked'));
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUBLIC)});
+    const time=(document.getElementById('remTime')||{}).value||'09:00';
+    const tz=-new Date().getTimezoneOffset();  // minutes offset from UTC
+    cfg.remTime=time;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));
+    const r=await fetch(WORKER_URL+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({sub:sub.toJSON?sub.toJSON():sub,time,tz,lang:LANG})});
+    if(!r.ok)throw new Error('server '+r.status);
+    closeRem();toast(t('pushOn'));
+  }catch(e){toast(t('pushErr')+(e.message||''));}
+}
 
 curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
