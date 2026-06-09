@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0,30 * * * *'   # every 30 min; per-user time is handled in the script
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Send to everyone now, ignoring the time window (test)'
+        type: boolean
+        default: false
 
 jobs:
   push:
@@ -18,3 +23,4 @@ jobs:
         env:
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
           LIST_SECRET: ${{ secrets.LIST_SECRET }}
+          FORCE: ${{ inputs.force }}

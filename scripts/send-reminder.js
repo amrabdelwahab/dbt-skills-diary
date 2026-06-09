@@ -10,6 +10,7 @@ const WORKER = 'https://dbt-diary-reminder.amrabdelwahab.workers.dev';
 const APP = 'https://amrabdelwahab.github.io/dbt-skills-diary/';
 const WINDOW = 60; // minutes after the chosen time we still consider "due" (absorbs cron jitter)
 
+const FORCE = process.env.FORCE === 'true';
 if (!PRIV || !SECRET) { console.error('Missing VAPID_PRIVATE or LIST_SECRET'); process.exit(1); }
 webpush.setVapidDetails('mailto:amr@teamalfred.ai', PUB, PRIV);
 
@@ -51,12 +52,14 @@ function localParts(rec) {
     const [th, tmm] = String(rec.time || '09:00').split(':').map(Number);
     const target = th * 60 + tmm;
 
-    if (rec.lastSent === dateStr) continue;            // already sent today (user-local)
-    if (lm < target || lm >= target + WINDOW) continue; // not in the due window
+    if (!FORCE) {
+      if (rec.lastSent === dateStr) continue;            // already sent today (user-local)
+      if (lm < target || lm >= target + WINDOW) continue; // not in the due window
+    }
     due++;
     try {
       await webpush.sendNotification(sub, payload(rec.lang));
-      await fetch(`${WORKER}/sent?key=${SECRET}`, {
+      if (!FORCE) await fetch(`${WORKER}/sent?key=${SECRET}`, {  // don't suppress today's real reminder when testing
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: item.id, date: dateStr }),
       });
