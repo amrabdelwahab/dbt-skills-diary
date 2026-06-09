@@ -148,6 +148,23 @@
   .installbar .it{flex:1;font-size:14px;font-weight:600;line-height:1.35}
   .installbar .yes{background:#fff;color:#4f46e5;border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:14px;white-space:nowrap}
   .installbar .no{background:#ffffff33;color:#fff;border:0;border-radius:10px;width:34px;height:38px;font-size:16px}
+  .practicebtn{display:block;width:100%;margin:4px 0 6px;background:linear-gradient(90deg,#0ea5e9,#6366f1);
+    color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700}
+  .mindgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
+  .mindtile{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 10px;min-height:128px;color:var(--ink)}
+  .mindtile:active{border-color:var(--accent);background:var(--card2)}
+  .mindtile .me{font-size:38px;line-height:1}
+  .mindtile b{font-size:14px;line-height:1.25;font-weight:700}
+  .breathwrap{display:flex;flex-direction:column;align-items:center;padding:24px 0 6px}
+  .breathcircle{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#38bdf8,#6366f1);
+    transform:scale(.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:42px;font-weight:800}
+  .bphase{font-size:20px;font-weight:700;margin-top:20px;text-align:center;min-height:26px}
+  .btimer{font-size:46px;font-weight:800;text-align:center;margin:14px 0}
+  .sensecount{font-size:72px;font-weight:800;text-align:center;color:var(--accent);line-height:1}
+  .sensebig{font-size:22px;font-weight:700;text-align:center;margin:18px 10px 24px;line-height:1.4}
+  .steplist{margin:10px 0;padding:0;list-style:none}
+  .steplist li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px;margin:8px 0;font-size:15px;line-height:1.45}
   .langbtn{background:var(--card2);border:1px solid var(--line);color:var(--ink);
     height:38px;min-width:42px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:700;
     display:inline-flex;align-items:center;justify-content:center;line-height:1}
@@ -236,6 +253,16 @@
   <div class="prog"><i id="raProg"></i></div>
   <div class="body" id="raBody"></div>
   <div class="nav" id="raNav"></div>
+</div>
+
+<!-- Mindfulness practice -->
+<div class="ctf" id="mind">
+  <div class="top">
+    <button class="x" onclick="closeMind()">✕</button>
+    <h2 id="mindTitle">Practice</h2>
+  </div>
+  <div class="body" id="mindBody"></div>
+  <div class="nav" id="mindNav"></div>
 </div>
 
 <input type="file" id="fileIn" accept="application/json" style="display:none" />
@@ -436,6 +463,7 @@ function render(){
     const done=g.skills.filter((_,si)=>state.skills[gi+'_'+si]).length;
     html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
       <h3>${grName(g)}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
+    if(gi===0)html+=`<button class="practicebtn" onclick="openMindPicker()">${L('🧘 Practice mindfulness','🧘 تمارين اليقظة')}</button>`;
     g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);
       const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
         <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`;
@@ -587,7 +615,7 @@ function ctfFit(v){ctf.fit=v;renderCTF();}
 function setNav(html){document.getElementById('ctfNav').innerHTML=`<div class="navin">${html}</div>`;}
 function nav(extra){
   const back=`<button class="back" onclick="ctfPrev()">${L('Back','رجوع')}</button>`;
-  setNav(back+(extra||`<button class="next" onclick="ctfNext()">${L('Next ▸','التالي ▸')}</button>`));
+  setNav(back+(extra||`<button class="next" onclick="ctfNext()">${L('Next ▸','◂ التالي')}</button>`));
 }
 function chips(field,list){return `<div class="chips">`+list.map(l=>
   `<button class="${ctf[field].includes(l[0])?'on':''}" onclick="ctfChip('${field}','${l[0]}')">${L(l[0],l[1])}</button>`).join('')+`</div>`;}
@@ -604,7 +632,7 @@ function renderCTF(){
   if(s==='intro'){
     h=`<p class="step-q">${L('Describe the emotion, then check the facts.','اوصف المشاعر، وبعدين راجع الحقائق.')}</p>
     <p class="step-h">${L('Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.','مهارتين DBT في واحدة. الأول <b>توصف المشاعر</b> — إيه اللي حصل، أحاسيس الجسم، الرغبات. وبعدين <b>تراجع الحقائق</b> — هل الشعور، وقد إيه هو قوي، فعلاً مناسب للموقف، ولا مناسب لـ<i>تفسيرك</i> ليه؟ دقايق قليلة. مفيش حاجة بتتبعت لحد إلا لو اخترت في الآخر.')}</p>`;
-    setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','ابدأ ▸')}</button>`);
+    setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','◂ ابدأ')}</button>`);
   }
   else if(s==='emotion'){
     h=`<p class="step-q">${L('What is the emotion you want to check?','إيه الشعور اللي عايز تراجعه؟')}</p>
@@ -632,7 +660,7 @@ function renderCTF(){
         <li>${L('<b>Distract & Self-soothe</b> — change activity; soothe your five senses','<b>التشتيت وتهدئة الذات</b> — غيّر النشاط؛ هدّي حواسك الخمسة')}</li>
       </ul></div>
     <p class="step-h">${L('Come back when you’re at roughly a 7 or below. You can continue now if you want, but it may be harder.','ارجع لما تبقى عند ٧ أو أقل. تقدر تكمّل دلوقتي لو حابب، بس ممكن يبقى أصعب.')}</p>`;
-    nav(`<button class="next" onclick="ctfNext()">${L('I’ve eased it — continue ▸','خفّفتها — كمّل ▸')}</button>`);
+    nav(`<button class="next" onclick="ctfNext()">${L('I’ve eased it — continue ▸','◂ خفّفتها — كمّل')}</button>`);
   }
   else if(s==='event'){
     h=`<p class="step-q">${L('What actually happened?','إيه اللي حصل فعلاً؟')}</p>
@@ -755,7 +783,7 @@ function raRender(){
   if(id==='intro'){
     h=`<p class="step-q">${L('🌳 Radical Acceptance','🌳 القبول الجذري')}</p>
     <p class="step-h">${L('Accepting reality fully — <b>as it is, right now</b> — when it isn’t the life you want. It is <b>not</b> approval, <b>not</b> love, <b>not</b> giving up, and <b>not</b> being against change. It’s letting go of the <i>fight</i> with reality, so you stop adding suffering on top of pain.','إنك تتقبّل الواقع بالكامل — <b>زي ما هو دلوقتي</b> — حتى لو مش الحياة اللي عايزها. هو <b>مش</b> موافقة، <b>مش</b> حب، <b>مش</b> استسلام، و<b>مش</b> ضد التغيير. هو إنك تبطّل <i>تتعارك</i> مع الواقع، عشان متزوّدش معاناة فوق الألم.')}</p>`;
-    raSetNav(`<button class="next" onclick="raNext()">${L('Start ▸','ابدأ ▸')}</button>`);return done(h);
+    raSetNav(`<button class="next" onclick="raNext()">${L('Start ▸','◂ ابدأ')}</button>`);return done(h);
   }
   if(id==='observe'){
     h=`<p class="step-q">${L('What reality are you fighting?','إيه الواقع اللي بتحاربه؟')}</p>
@@ -811,7 +839,7 @@ function raRender(){
     raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raClose()">${L('Done','تمام')}</button>`);
     return done(h);
   }
-  raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raNext()">${L('Next ▸','التالي ▸')}</button>`);
+  raSetNav(`<button class="back" onclick="raPrev()">${L('Back','رجوع')}</button><button class="next" onclick="raNext()">${L('Next ▸','◂ التالي')}</button>`);
   done(h);
   function done(html){document.getElementById('raBody').innerHTML=html;}
 }
@@ -901,6 +929,125 @@ async function enablePush(){
     closeRem();toast(t('pushOn'));
   }catch(e){toast(t('pushErr')+(e.message||''));}
 }
+
+/* ===================== Mindfulness practice ===================== */
+// type: breath | timer | senses | steps. skill: id to mark on Done. yt: YouTube id to embed. ytq: search query.
+const EXERCISES=[
+  { id:'box', emoji:'🌬️', skill:'0_5', type:'breath',
+    title:['Box breathing','تنفّس الصندوق'],
+    desc:['Calm your body: in 4 · hold 4 · out 4 · hold 4','هدّي جسمك: شهيق ٤ · ثبات ٤ · زفير ٤ · ثبات ٤'],
+    phases:[['Breathe in','شهيق',4,'in'],['Hold','ثبات',4,'hold'],['Breathe out','زفير',4,'out'],['Hold','ثبات',4,'hold']],
+    ytq:'box breathing 4-4-4-4 guided' },
+  { id:'senses', emoji:'🖐️', skill:'0_1', type:'senses',
+    title:['5-4-3-2-1 grounding','Grounding 5-4-3-2-1'],
+    desc:['Anchor to now through your senses','اربط نفسك باللحظة عن طريق حواسك'],
+    steps:[['5 things you can see','٥ حاجات تقدر تشوفها'],['4 things you can touch','٤ حاجات تقدر تلمسها'],
+      ['3 things you can hear','٣ حاجات تقدر تسمعها'],['2 things you can smell','٢ حاجة تقدر تشمّها'],['1 thing you can taste','١ حاجة تقدر تتذوقها']],
+    ytq:'5-4-3-2-1 grounding technique' },
+  { id:'breath', emoji:'🫁', skill:'0_1', type:'timer', dur:120,
+    title:['Observe your breath','لاحظ نفسك'],
+    desc:['Rest attention on the breath; return gently when it wanders','حط انتباهك على النفس؛ ارجع بهدوء لما يسرح'],
+    steps:[['Notice the breath coming in and going out','لاحظ النفس وهو داخل وخارج'],
+      ['When your mind wanders, gently bring it back','لما عقلك يسرح، رجّعه بهدوء'],
+      ['No need to control it — just watch','مش لازم تتحكم فيه — بس راقبه']],
+    ytq:'mindful breathing meditation 2 minutes' },
+  { id:'bodyscan', emoji:'🧎', skill:'0_1', type:'timer', dur:180,
+    title:['Body scan','مسح الجسم'],
+    desc:['Move attention slowly from head to toe','حرّك انتباهك ببطء من الراس للقدم'],
+    steps:[['Start at the top of your head','ابدأ من أعلى راسك'],
+      ['Move down slowly — face, neck, shoulders, arms, chest, legs…','انزل بالراحة — الوش، الرقبة، الكتفين، الذراعين، الصدر، الرجلين…'],
+      ['Notice sensations without judging; soften where you can','لاحظ الأحاسيس من غير حكم؛ ليّن اللي تقدر عليه']],
+    ytq:'short body scan meditation guided' },
+  { id:'leaves', emoji:'🍃', skill:'0_1', type:'timer', dur:120,
+    title:['Leaves on a stream','أوراق على نهر'],
+    desc:['Let thoughts float by instead of holding on','سيب أفكارك تعدّي بدل ما تمسكها'],
+    steps:[['Picture a gentle stream with leaves floating by','تخيّل نهر هادي وعليه أوراق بتعدّي'],
+      ['Place each thought on a leaf and watch it drift away','حط كل فكرة على ورقة وسيبها تروح'],
+      ['If you get carried off, come back to the stream','لو سرحت، ارجع للنهر']],
+    ytq:'leaves on a stream defusion exercise' },
+  { id:'wise', emoji:'☯️', skill:'0_0', type:'breath',
+    title:['Wise Mind breathing','تنفّس العقل الحكيم'],
+    desc:['In “Wise”, out “Mind” — settle into the still point','شهيق «حكيم»، زفير «عقل» — استقر في نقطة السكون'],
+    phases:[['Breathe in — “Wise”','شهيق — «حكيم»',4,'in'],['Breathe out — “Mind”','زفير — «عقل»',6,'out']],
+    ytq:'wise mind meditation dbt' },
+  { id:'object', emoji:'🔍', skill:'0_1', type:'timer', dur:120,
+    title:['Observe one thing','لاحظ حاجة واحدة'],
+    desc:['Pick an object and explore it with your senses','اختار حاجة واستكشفها بحواسك'],
+    steps:[['Pick a small object near you','اختار حاجة صغيرة جنبك'],
+      ['Explore its colour, shape, texture, weight','استكشف لونها، شكلها، ملمسها، وزنها'],
+      ['When words or judgments come, return to just sensing','لما ييجي كلام أو حكم، ارجع لمجرد الإحساس']],
+    ytq:'mindful observation exercise object' },
+  { id:'participate', emoji:'💃', skill:'0_3', type:'steps',
+    title:['Throw yourself in','اندمج بالكامل'],
+    desc:['Do one activity fully — become one with it','اعمل نشاط واحد بالكامل — وكن واحد معاه'],
+    steps:[['Pick one simple activity (walk, wash dishes, dance)','اختار نشاط بسيط (مشي، غسيل، رقص)'],
+      ['Throw yourself into it 100% — let go of watching yourself','اندمج فيه ١٠٠٪ — سيب مراقبة نفسك'],
+      ['When you drift into thinking, dive back into doing','لما تسرح في التفكير، ارجع للفعل']],
+    ytq:'participate fully mindfulness dbt' },
+];
+let mind={};
+function fmt(s){s=Math.max(0,s|0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function openMindPicker(){mind={};document.getElementById('mind').classList.add('show');renderMindPicker();}
+function closeMind(){clearInterval(mind.iv);document.getElementById('mind').classList.remove('show');render();}
+function renderMindPicker(){
+  clearInterval(mind.iv);
+  document.getElementById('mindTitle').textContent=L('Mindfulness practice','تمارين اليقظة');
+  document.getElementById('mindBody').innerHTML='<div class="mindgrid">'+EXERCISES.map((ex,i)=>
+    `<button class="mindtile" onclick="openMindEx(${i})"><span class="me">${ex.emoji}</span><b>${L(ex.title[0],ex.title[1])}</b></button>`).join('')+'</div>';
+  document.getElementById('mindNav').innerHTML=`<div class="navin"><button class="next" onclick="closeMind()">${L('Close','إغلاق')}</button></div>`;
+}
+function ytSearch(q){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q);}
+function openMindEx(i){clearInterval(mind.iv);mind.ex=EXERCISES[i];mind.bi=0;mind.si=0;mind.rem=mind.ex.dur||0;mind.running=false;renderMindEx();}
+function renderMindEx(){
+  const ex=mind.ex;document.getElementById('mindTitle').textContent=L(ex.title[0],ex.title[1]);
+  let h=`<p class="step-q">${ex.emoji} ${L(ex.title[0],ex.title[1])}</p><p class="step-h">${L(ex.desc[0],ex.desc[1])}</p>`;
+  if(ex.type==='breath'){
+    h+=`<div class="breathwrap"><div class="breathcircle" id="mCircle"><span id="mCount"></span></div>
+      <div class="bphase" id="mPhase">${L('Tap start','دوس ابدأ')}</div></div>
+      <button class="ctfopen" style="background:var(--accent)" id="mStart" onclick="toggleBreath()">${L('Start','ابدأ')}</button>`;
+  } else if(ex.type==='timer'){
+    h+=`<ul class="steplist">`+ex.steps.map(s=>`<li>${L(s[0],s[1])}</li>`).join('')+`</ul>
+      <div class="btimer" id="mTimer">${fmt(mind.rem)}</div>
+      <button class="ctfopen" style="background:var(--accent)" id="mStart" onclick="toggleTimer()">${L('Start','ابدأ')}</button>`;
+  } else if(ex.type==='senses'){
+    h+=`<div class="sensecount" id="mSenseN">${ex.steps.length-mind.si}</div>
+      <div class="sensebig" id="mSenseT">${L(ex.steps[mind.si][0],ex.steps[mind.si][1])}</div>
+      <button class="ctfopen" style="background:var(--accent)" id="mNext" onclick="nextSense()">${mind.si<ex.steps.length-1?L('Next','التالي'):L('Finish','خلصت')}</button>`;
+  } else {
+    h+=`<ul class="steplist">`+ex.steps.map(s=>`<li>${L(s[0],s[1])}</li>`).join('')+`</ul>`;
+  }
+  if(ex.yt){h+=`<div style="margin-top:14px;border-radius:12px;overflow:hidden"><iframe width="100%" height="200" src="https://www.youtube.com/embed/${ex.yt}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;}
+  else if(ex.ytq){h+=`<a href="${ytSearch(ex.ytq)}" target="_blank" rel="noopener" class="ctfopen" style="background:#ef4444;text-decoration:none;text-align:center;box-sizing:border-box">${L('▶ Watch a guided version','▶ شوف نسخة موجّهة بالفيديو')}</a>`;}
+  document.getElementById('mindBody').innerHTML=h;
+  document.getElementById('mindNav').innerHTML=`<div class="navin"><button class="back" onclick="renderMindPicker()">${L('Back','رجوع')}</button><button class="next" onclick="doneMind()">${L('Done','تمام')}</button></div>`;
+}
+function toggleBreath(){
+  if(mind.running){mind.running=false;clearInterval(mind.iv);document.getElementById('mStart').textContent=L('Resume','استكمال');return;}
+  mind.running=true;document.getElementById('mStart').textContent=L('Pause','إيقاف مؤقت');runPhase();
+}
+function runPhase(){
+  if(!mind.running)return;const ph=mind.ex.phases[mind.bi];const secs=ph[2],mode=ph[3];
+  const c=document.getElementById('mCircle');if(!c)return;
+  c.style.transition='transform '+secs+'s '+(mode==='hold'?'linear':'ease-in-out');
+  if(mode==='in')c.style.transform='scale(1)';else if(mode==='out')c.style.transform='scale(.55)';
+  document.getElementById('mPhase').textContent=L(ph[0],ph[1]);
+  let rem=secs;const cn=document.getElementById('mCount');cn.textContent=rem;
+  clearInterval(mind.iv);mind.iv=setInterval(()=>{rem--;cn.textContent=rem>0?rem:'';
+    if(rem<=0){clearInterval(mind.iv);mind.bi=(mind.bi+1)%mind.ex.phases.length;runPhase();}},1000);
+}
+function toggleTimer(){
+  const sb=document.getElementById('mStart');
+  if(mind.running){mind.running=false;clearInterval(mind.iv);sb.textContent=L('Resume','استكمال');return;}
+  mind.running=true;sb.textContent=L('Pause','إيقاف مؤقت');clearInterval(mind.iv);
+  mind.iv=setInterval(()=>{mind.rem--;const el=document.getElementById('mTimer');if(el)el.textContent=fmt(mind.rem);
+    if(mind.rem<=0){clearInterval(mind.iv);mind.running=false;if(el)el.textContent=L('Done 🌸','تمام 🌸');if(sb)sb.style.display='none';}},1000);
+}
+function nextSense(){const ex=mind.ex;if(mind.si>=ex.steps.length-1)return doneMind();
+  mind.si++;document.getElementById('mSenseN').textContent=ex.steps.length-mind.si;
+  document.getElementById('mSenseT').textContent=L(ex.steps[mind.si][0],ex.steps[mind.si][1]);
+  if(mind.si===ex.steps.length-1)document.getElementById('mNext').textContent=L('Finish','خلصت');}
+function doneMind(){clearInterval(mind.iv);if(mind.ex&&mind.ex.skill){state.skills[mind.ex.skill]=true;save();render();}
+  toast(L('Nice practice 🌸','تمرين جميل 🌸'));closeMind();}
 
 curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
