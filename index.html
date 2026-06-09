@@ -861,7 +861,9 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 const WORKER_URL='https://dbt-diary-reminder.amrabdelwahab.workers.dev';
 const VAPID_PUBLIC='BHw5X_AeAf4KDA1ylK313KCurAAMsyfXhX5XDh-C73sOUqDHumfL6xyYY-IUwH_PC6taW5gGRDqMfw4EBya_rkA';
 function urlB64ToUint8(b){const pad='='.repeat((4-b.length%4)%4);const s=(b+pad).replace(/-/g,'+').replace(/_/g,'/');const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
-function openRem(){closeMenu();const v=cfg.remTime||'09:00';const on=!!cfg.remOn;
+async function openRem(){closeMenu();const v=cfg.remTime||'09:00';
+  let on=!!cfg.remOn;
+  try{const reg=await navigator.serviceWorker.ready;on=!!(await reg.pushManager.getSubscription());}catch(_){}
   document.getElementById('remSheet').innerHTML=
     `<h2 style="margin:6px 4px 2px;font-size:18px">${t('remTitle')}</h2>
      <p class="hint" style="margin:0 4px 14px">${on?(t('remOnAt')+' '+v):t('remHint')}</p>
