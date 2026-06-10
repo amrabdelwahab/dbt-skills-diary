@@ -53,8 +53,10 @@ function localParts(rec) {
     const target = th * 60 + tmm;
 
     if (!FORCE) {
-      if (rec.lastSent === dateStr) continue;            // already sent today (user-local)
-      if (lm < target || lm >= target + WINDOW) continue; // not in the due window
+      if (rec.lastSent === dateStr) continue;  // already sent today (user-local)
+      if (lm < target) continue;               // not yet their chosen time today
+      // No upper bound: GitHub's free cron is sparse/irregular, so send on the
+      // first run at/after the chosen time. Once-per-day is enforced by lastSent.
     }
     due++;
     try {
