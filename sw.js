@@ -5,7 +5,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', event => {
-  let d = { title: 'مذكرة DBT 🌙', body: 'وقت مذكرة النهارده', url: './' };
+  let d = { title: 'DBT Diary · مذكرة 🌙', body: 'وقت مذكرتك النهارده — time for your diary', url: './' };
   try { if (event.data) Object.assign(d, event.data.json()); }
   catch (_) { if (event.data) d.body = event.data.text(); }
   event.waitUntil(self.registration.showNotification(d.title, {

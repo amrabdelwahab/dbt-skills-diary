@@ -1,8 +1,8 @@
 name: Daily reminder
 
+# NOTE: the live daily reminder now runs on Cloudflare Cron (punctual, every 5 min).
+# This workflow is kept only for manual/rich-payload testing via "Run workflow".
 on:
-  schedule:
-    - cron: '0,30 * * * *'   # every 30 min; per-user time is handled in the script
   workflow_dispatch:
     inputs:
       force:

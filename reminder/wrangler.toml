@@ -6,3 +6,10 @@ compatibility_date = "2024-11-01"
 kv_namespaces = [
   { binding = "SUBS", id = "4b751c7ab4e740debf6fed9f7ec50d7b" }
 ]
+
+[triggers]
+crons = ["*/5 * * * *"]   # punctual: every 5 minutes
+
+[vars]
+VAPID_PUBLIC = "BHw5X_AeAf4KDA1ylK313KCurAAMsyfXhX5XDh-C73sOUqDHumfL6xyYY-IUwH_PC6taW5gGRDqMfw4EBya_rkA"
+VAPID_SUBJECT = "mailto:amr@teamalfred.ai"
