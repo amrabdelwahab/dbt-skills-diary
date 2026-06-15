@@ -5,13 +5,21 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', event => {
-  let d = { title: 'DBT Diary · مذكرة 🌙', body: 'وقت مذكرتك النهارده — time for your diary', url: './' };
-  try { if (event.data) Object.assign(d, event.data.json()); }
-  catch (_) { if (event.data) d.body = event.data.text(); }
-  event.waitUntil(self.registration.showNotification(d.title, {
-    body: d.body, dir: 'auto', tag: 'dbt-daily', renotify: true,
-    data: { url: d.url || './' }
-  }));
+  event.waitUntil((async () => {
+    // The app stores its current language in the Cache so the SW can match it.
+    let lang = 'en';
+    try { const c = await caches.open('dbt-cfg'); const r = await c.match('/lang'); if (r) lang = (await r.text()) || 'en'; } catch (_) {}
+    let d = null;
+    if (event.data) { try { d = event.data.json(); } catch (_) { d = { body: event.data.text() }; } }
+    if (!d) {
+      d = lang === 'ar'
+        ? { title: 'مذكرة DBT 🌙', body: 'وقت مذكرتك النهارده — افتحها وابعتها للمعالج' }
+        : { title: 'DBT Diary 🌙', body: 'Time for today’s diary — open it and send to your therapist' };
+    }
+    await self.registration.showNotification(d.title || 'DBT Diary', {
+      body: d.body || '', dir: 'auto', tag: 'dbt-daily', renotify: true, data: { url: d.url || './' },
+    });
+  })());
 });
 
 self.addEventListener('notificationclick', event => {

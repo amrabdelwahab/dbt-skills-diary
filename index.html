@@ -150,6 +150,20 @@
   .installbar .no{background:#ffffff33;color:#fff;border:0;border-radius:10px;width:34px;height:38px;font-size:16px}
   .practicebtn{display:block;width:100%;margin:4px 0 6px;background:linear-gradient(90deg,#0ea5e9,#6366f1);
     color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700}
+  .modebtn{display:block;width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);
+    border-radius:14px;padding:20px;font-size:17px;font-weight:700;margin:10px 0;text-align:start}
+  .modebtn .ms{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:4px}
+  .factor{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin:9px 0}
+  .flab{display:flex;align-items:center;gap:8px}
+  .flab b{font-size:15px;flex:1}
+  .fval{background:var(--accent);color:#fff;border-radius:8px;min-width:32px;text-align:center;padding:3px 6px;font-weight:800;font-size:14px}
+  .fq{color:var(--muted);font-size:13px;margin:4px 0 10px;line-height:1.4}
+  .factor input[type=range]{width:100%;accent-color:var(--accent)}
+  .asktotal{position:sticky;bottom:0;background:#0b1220ee;backdrop-filter:blur(6px);border-top:1px solid var(--line);
+    margin:10px -16px -20px;padding:13px 16px;text-align:center;font-weight:800;font-size:16px}
+  .bigscore{font-size:64px;font-weight:800;text-align:center;color:var(--accent);line-height:1;margin-top:6px}
+  .bandbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
+  .bandbox .bt{font-size:19px;font-weight:800}
   .mindgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
   .mindtile{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;
     background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 10px;min-height:128px;color:var(--ink)}
@@ -253,6 +267,17 @@
   <div class="prog"><i id="raProg"></i></div>
   <div class="body" id="raBody"></div>
   <div class="nav" id="raNav"></div>
+</div>
+
+<!-- Ask / Say No intensity -->
+<div class="ctf" id="ask">
+  <div class="top">
+    <button class="x" onclick="closeAsk()">✕</button>
+    <h2 id="askTitle">Ask / Say No</h2>
+  </div>
+  <div class="prog"><i id="askProg"></i></div>
+  <div class="body" id="askBody"></div>
+  <div class="nav" id="askNav"></div>
 </div>
 
 <!-- Mindfulness practice -->
@@ -409,6 +434,7 @@ function applyLang(){
   if(view==='archive'){showArchive();}
   else{document.getElementById('title').textContent=t('appTitle');render();}
   maybeShowInstall();
+  try{caches.open('dbt-cfg').then(c=>c.put('/lang',new Response(LANG)));}catch(_){}  // let the SW localize push text
 }
 function toggleLang(){LANG=LANG==='ar'?'en':'ar';cfg.lang=LANG;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));applyLang();}
 function buildMenu(){
@@ -464,6 +490,7 @@ function render(){
     html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
       <h3>${grName(g)}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
     if(gi===0)html+=`<button class="practicebtn" onclick="openMindPicker()">${L('🧘 Practice mindfulness','🧘 تمارين اليقظة')}</button>`;
+    if(gi===1)html+=`<button class="practicebtn" style="background:linear-gradient(90deg,#f472b6,#a855f7)" onclick="openAsk()">${L('🤝 How firmly to ask / say no?','🤝 أطلب أو أرفض بقوة قد إيه؟')}</button>`;
     g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);
       const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
         <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`;
@@ -1048,6 +1075,97 @@ function nextSense(){const ex=mind.ex;if(mind.si>=ex.steps.length-1)return doneM
   if(mind.si===ex.steps.length-1)document.getElementById('mNext').textContent=L('Finish','خلصت');}
 function doneMind(){clearInterval(mind.iv);if(mind.ex&&mind.ex.skill){state.skills[mind.ex.skill]=true;save();render();}
   toast(L('Nice practice 🌸','تمرين جميل 🌸'));closeMind();}
+
+/* ===================== Ask / Say No intensity ===================== */
+// [key, [labelEn,labelAr], [questionEn,questionAr]] — Arabic from the user's source document.
+const ASK_FACTORS=[
+  ['cap',["Capability","القدرة"],["Can this person realistically do what I'm asking?","هل الشخص ده يقدر فعلاً يعمل اللي بطلبه؟"]],
+  ['pri',["Priority","الأولوية"],["How important is getting this request met?","قد إيه الطلب ده من أولوياتي؟"]],
+  ['self',["Self-respect","احترام الذات"],["Will asking increase my self-respect / sense of competence?","هل إني أطلب هيزوّد احترامي لنفسي وإحساسي بكفاءتي؟"]],
+  ['rights',["Rights","الحقوق"],["Do I have a legal / moral / reasonable right to ask?","هل من حقي (قانونيًا/أخلاقيًا) أطلب ده؟"]],
+  ['auth',["Authority","السلطة"],["Is this person responsible for / able to provide it?","هل من سلطة الشخص ده ومسؤوليته إنه يوفّر اللي بطلبه؟"]],
+  ['rel',["Relationship","العلاقة"],["Does our relationship make this request appropriate?","هل نوع علاقتنا بيخلّي الطلب ده مناسب؟"]],
+  ['goals',["Goals","الأهداف"],["Is it important for my short- or long-term goals?","هل الطلب ده مهم لأهدافي القريبة أو البعيدة؟"]],
+  ['recip',["Reciprocity","الأخذ والعطاء"],["Do I give as much as I ask for in this relationship?","هل فيه توازن؟ بدّي بقدر ما بطلب في العلاقة دي؟"]],
+  ['prep',["Preparation","التحضير"],["Have I done my homework and gathered the facts?","هل عملت اللي عليّا واستعديت وجمعت المعلومات؟"]],
+  ['time',["Timing","التوقيت"],["Is this a good time to ask?","هل ده وقت مناسب للطلب؟"]],
+];
+const NO_FACTORS=[
+  ['cap',["Capability","القدرة"],["Am I actually able to do what is being asked?","هل أنا فعلاً قادر أعمل اللي مطلوب مني؟"]],
+  ['rel',["Relationship","العلاقة"],["Is preserving the relationship more important than saying yes?","هل الحفاظ على العلاقة أهم من إني أوافق؟"]],
+  ['self',["Self-respect","احترام الذات"],["Would saying yes make me feel worse about myself?","هل الموافقة هتخلّيني أحس بنفسي أوحش؟"]],
+  ['rights',["Rights","الحقوق"],["Do I have the right to refuse? Would yes violate my values?","هل من حقي أرفض؟ هل الموافقة تخالف قيمي أو التزاماتي؟"]],
+  ['auth',["Authority","السلطة"],["Is the request outside this person's authority over me?","هل الطلب ده خارج سلطة الشخص ده عليّا؟"]],
+  ['fit',["Relationship fit","مناسبة للعلاقة"],["Is this request inappropriate for our relationship?","هل الطلب ده مش مناسب لنوع علاقتنا؟"]],
+  ['goals',["Goals","الأهداف"],["Would saying yes harm my short- or long-term goals?","هل الموافقة هتضر أهدافي القريبة أو البعيدة؟"]],
+  ['recip',["Reciprocity","الأخذ والعطاء"],["Am I already giving more than I receive?","هل أنا أصلاً بدّي أكتر مما بآخد في العلاقة دي؟"]],
+  ['clarity',["Clarity","الوضوح"],["Do I fully understand what I'm being asked to do?","هل فاهم تمامًا اللي مطلوب مني؟"]],
+  ['time',["Timing","التوقيت"],["Would it be better to delay than agree right now?","هل الأفضل أأجّل ردي بدل ما أوافق على طول؟"]],
+];
+const ASK_SHORT=[["Can they do it?","يقدر يعملها؟"],["Do I have a right to ask?","من حقي أطلب؟"],["Is it important?","الطلب مهم؟"],["Right person & right time?","الشخص والوقت مناسبين؟"],["Will I respect myself more for asking?","هحترم نفسي أكتر لو طلبت؟"]];
+const NO_SHORT=[["Can I actually do it?","أنا فعلاً أقدر أعملها؟"],["Do I want to do it?","أنا عايز أعملها؟"],["Is it consistent with my values?","متوافق مع قيمي؟"],["Will yes hurt my goals / self-respect?","الموافقة هتضر أهدافي أو احترامي لنفسي؟"],["Yes out of fear of disappointing?","بوافق خوفًا من إني أزعّل حد؟"]];
+let ask={};
+function openAsk(){ask={step:'mode',scores:{}};document.getElementById('ask').classList.add('show');renderAsk();}
+function closeAsk(){document.getElementById('ask').classList.remove('show');render();}
+function askMode(m){ask.mode=m;ask.scores={};(m==='ask'?ASK_FACTORS:NO_FACTORS).forEach(f=>ask.scores[f[0]]=5);ask.step='score';renderAsk();}
+function setFactor(k,v){ask.scores[k]=+v;const b=document.getElementById('fv_'+k);if(b)b.textContent=v;const t=document.getElementById('askTot');if(t)t.textContent=askTotal();}
+function askTotal(){return Object.values(ask.scores).reduce((a,b)=>a+(b||0),0);}
+function askBand(total,mode){
+  const T={
+    hi:  mode==='ask'?["Ask clearly and firmly","اطلب بوضوح وحزم"]:["Strong, clear no","ارفض بقوة ووضوح"],
+    mid: mode==='ask'?["Ask directly, but stay flexible","اطلب بشكل مباشر، بس فضل مرن"]:["Firm no — explain if it helps","رفض حازم — مع توضيح لو هيساعد"],
+    low: mode==='ask'?["Consider negotiating or adjusting","فكّر في التفاوض أو تعديل التوقعات"]:["Consider a compromise or negotiation","فكّر في حل وسط أو تفاوض"],
+    vlow:mode==='ask'?["Reconsider whether, who, or when to ask","راجع: تطلب أصلاً؟ مين؟ امتى؟"]:["Maybe say yes, or gather more info first","يمكن توافق، أو اجمع معلومات أكتر الأول"],
+  };
+  return T[total>=80?'hi':total>=60?'mid':total>=40?'low':'vlow'];
+}
+function renderAsk(){
+  const b=document.getElementById('askBody');
+  if(ask.step==='mode'){
+    document.getElementById('askProg').style.width='0%';
+    document.getElementById('askTitle').textContent=L('How firmly to ask or say no?','أطلب أو أرفض بقوة قد إيه؟');
+    b.innerHTML=`<p class="step-h">${L('A DBT tool to decide how firmly to ask for something — or how firmly to refuse. Check your Wise Mind as you score.','أداة DBT تساعدك تقرر تطلب بقوة قد إيه — أو ترفض بقوة قد إيه. راجع عقلك الحكيم وإنت بتقيّم.')}</p>
+      <button class="modebtn" onclick="askMode('ask')"><b>${L('I want to ask for something','عايز أطلب حاجة')}</b><span class="ms">${L('How firmly should I ask?','أطلب بقوة قد إيه؟')}</span></button>
+      <button class="modebtn" onclick="askMode('no')"><b>${L('I want to say no','عايز أرفض')}</b><span class="ms">${L('How firmly should I say no?','أرفض بقوة قد إيه؟')}</span></button>`;
+    document.getElementById('askNav').innerHTML=`<div class="navin"><button class="next" onclick="closeAsk()">${L('Close','إغلاق')}</button></div>`;
+    return;
+  }
+  if(ask.step==='score'){
+    const F=ask.mode==='ask'?ASK_FACTORS:NO_FACTORS;
+    document.getElementById('askProg').style.width='50%';
+    document.getElementById('askTitle').textContent=ask.mode==='ask'?L('How firmly should I ask?','أطلب بقوة قد إيه؟'):L('How firmly should I say no?','أرفض بقوة قد إيه؟');
+    b.innerHTML=`<p class="step-h">${L('Rate each 0–10. Higher total → '+(ask.mode==='ask'?'ask more firmly.':'refuse more firmly.'),'قيّم كل عامل من ٠ لـ ١٠. المجموع الأعلى → '+(ask.mode==='ask'?'تطلب بحزم أكتر.':'ترفض بحزم أكتر.'))}</p>`
+      +F.map(f=>`<div class="factor"><div class="flab"><b>${L(f[1][0],f[1][1])}</b><span class="fval" id="fv_${f[0]}">${ask.scores[f[0]]}</span></div>
+        <div class="fq">${L(f[2][0],f[2][1])}</div>
+        <input type="range" min="0" max="10" value="${ask.scores[f[0]]}" oninput="setFactor('${f[0]}',this.value)"></div>`).join('')
+      +`<div class="asktotal">${L('Total','المجموع')}: <span id="askTot">${askTotal()}</span> / 100</div>`;
+    document.getElementById('askNav').innerHTML=`<div class="navin"><button class="back" onclick="ask.step='mode';renderAsk()">${L('Back','رجوع')}</button><button class="next" onclick="ask.step='result';renderAsk()">${L('See result','شوف النتيجة')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
+    return;
+  }
+  // result
+  const tot=askTotal(),bd=askBand(tot,ask.mode);
+  const short=ask.mode==='ask'?ASK_SHORT:NO_SHORT;
+  document.getElementById('askProg').style.width='100%';
+  document.getElementById('askTitle').textContent=L('Result','النتيجة');
+  b.innerHTML=`<div class="bigscore">${tot}<span style="font-size:22px;color:var(--muted)">/100</span></div>
+    <div class="bandbox"><div class="bt">${L(bd[0],bd[1])}</div></div>
+    <div class="lab">${L('Quick gut-check','مراجعة سريعة')}</div>
+    <ul class="steplist">`+short.map(s=>`<li>${L(s[0],s[1])}</li>`).join('')+`</ul>
+    <button class="ctfopen" style="background:var(--accent2)" onclick="askToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+    <button class="canttell" onclick="askShare()">${L('📲 Send to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>
+    <button class="canttell" onclick="navigator.clipboard.writeText(askSummary()).then(()=>toast(t('copied')))">${L('📋 Copy','📋 نسخ')}</button>`;
+  document.getElementById('askNav').innerHTML=`<div class="navin"><button class="back" onclick="ask.step='score';renderAsk()">${L('Back','رجوع')}</button><button class="next" onclick="doneAsk()">${L('Done','تمام')}</button></div>`;
+}
+function askSummary(){
+  const F=ask.mode==='ask'?ASK_FACTORS:NO_FACTORS,tot=askTotal(),bd=askBand(tot,ask.mode);
+  const head=ask.mode==='ask'?L('🤝 How strongly to ask','🤝 أطلب بقوة قد إيه'):L('🤝 How strongly to say no','🤝 أرفض بقوة قد إيه');
+  const L1=[head+' — '+pretty(curKey), L('Total','المجموع')+': '+tot+'/100 → '+L(bd[0],bd[1]),''];
+  F.forEach(f=>L1.push(L(f[1][0],f[1][1])+': '+ask.scores[f[0]]+'/10'));
+  return L1.join('\n');
+}
+function askToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+askSummary();save();render();toast(t('addedNotes'));closeAsk();}
+function askShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(askSummary());}
+function doneAsk(){state.skills['1_0']=true;save();render();toast(L('Decision noted 🤝','اتسجّل القرار 🤝'));closeAsk();}
 
 curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
