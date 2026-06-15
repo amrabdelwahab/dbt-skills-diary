@@ -5,19 +5,19 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', event => {
+  // Read the payload synchronously — event.data can become unavailable after an await.
+  let payload = null;
+  try { if (event.data) payload = event.data.json(); } catch (_) { try { payload = { body: event.data.text() }; } catch (_) {} }
   event.waitUntil((async () => {
     // The app stores its current language in the Cache so the SW can match it.
     let lang = 'en';
     try { const c = await caches.open('dbt-cfg'); const r = await c.match('/lang'); if (r) lang = (await r.text()) || 'en'; } catch (_) {}
-    let d = null;
-    if (event.data) { try { d = event.data.json(); } catch (_) { d = { body: event.data.text() }; } }
-    if (!d) {
-      d = lang === 'ar'
-        ? { title: 'مذكرة DBT 🌙', body: 'وقت مذكرتك النهارده — افتحها وابعتها للمعالج' }
-        : { title: 'DBT Diary 🌙', body: 'Time for today’s diary — open it and send to your therapist' };
-    }
-    await self.registration.showNotification(d.title || 'DBT Diary', {
-      body: d.body || '', dir: 'auto', tag: 'dbt-daily', renotify: true, data: { url: d.url || './' },
+    const def = lang === 'ar'
+      ? { title: 'مذكرة DBT 🌙', body: 'وقت مذكرتك النهارده — افتحها وابعتها للمعالج' }
+      : { title: 'DBT Diary 🌙', body: 'Time for today’s diary — open it and send to your therapist' };
+    const d = payload || def;
+    await self.registration.showNotification(d.title || def.title, {
+      body: d.body || def.body, dir: 'auto', tag: 'dbt-daily', renotify: true, data: { url: d.url || './' },
     });
   })());
 });
