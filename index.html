@@ -164,6 +164,17 @@
   .bigscore{font-size:64px;font-weight:800;text-align:center;color:var(--accent);line-height:1;margin-top:6px}
   .bandbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
   .bandbox .bt{font-size:19px;font-weight:800}
+  .lrow{display:flex;align-items:center;gap:11px;width:100%;text-align:start;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;padding:14px;margin:8px 0;color:var(--ink)}
+  .lrow .lt{flex:1;min-width:0}.lrow .lt b{font-size:15px}
+  .lrow .lt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .lrow .chev{color:var(--muted);font-size:20px;flex:none}
+  .infosec{margin:16px 0}
+  .infosec .ih{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .infosec p{margin:0;font-size:16px;line-height:1.55}
+  .mythq{font-size:21px;font-weight:800;line-height:1.45;margin:8px 0 16px}
+  .mythch{background:#14321f;border:1px solid var(--accent2);border-radius:12px;padding:14px;font-size:15px;line-height:1.5}
+  .mythch .cl{display:block;font-size:12px;color:#86efac;font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
   .mindgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
   .mindtile{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;
     background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 10px;min-height:128px;color:var(--ink)}
@@ -201,6 +212,7 @@
     <div class="date" id="dateLine"></div>
   </div>
   <div class="nav">
+    <button class="langbtn" onclick="openLearn()" title="Learn the skills" aria-label="Learn the skills">📖</button>
     <button class="langbtn" id="langBtn" onclick="toggleLang()">ع</button>
     <button onclick="step(-1)" title="Previous day">‹</button>
     <button onclick="step(1)" title="Next day">›</button>
@@ -267,6 +279,27 @@
   <div class="prog"><i id="raProg"></i></div>
   <div class="body" id="raBody"></div>
   <div class="nav" id="raNav"></div>
+</div>
+
+<!-- Learn the skills -->
+<div class="ctf" id="learn">
+  <div class="top">
+    <button class="x" onclick="closeLearn()">✕</button>
+    <h2 id="learnTitle">Learn</h2>
+  </div>
+  <div class="body" id="learnBody"></div>
+  <div class="nav" id="learnNav"></div>
+</div>
+
+<!-- Myths about emotions -->
+<div class="ctf" id="myth">
+  <div class="top">
+    <button class="x" onclick="closeMyths()">✕</button>
+    <h2 id="mythTitle">Myths</h2>
+  </div>
+  <div class="prog"><i id="mythProg"></i></div>
+  <div class="body" id="mythBody"></div>
+  <div class="nav" id="mythNav"></div>
 </div>
 
 <!-- Ask / Say No intensity -->
@@ -376,6 +409,16 @@ const T = {
   mExport:['⬇️ Export backup (all days)','⬇️ نسخة احتياطية (كل الأيام)'],
   mImport:['⬆️ Restore from backup','⬆️ استرجاع من نسخة احتياطية'],
   mClose:['Close','إغلاق'],
+  mLearn:['📖 Learn the skills','📖 اتعلّم المهارات'],
+  learnTitle:['Learn the skills','اتعلّم المهارات'],
+  iWhat:['What it is','إيه هي'],
+  iHow:['How & when','إزاي وامتى'],
+  iTry:['Try the guided tool','جرّب الأداة الموجّهة'],
+  mythsBtn:['🧠 Myths about emotions','🧠 خرافات عن المشاعر'],
+  mythsTitle:['Myths about emotions','خرافات عن المشاعر'],
+  mythChallenge:['Challenge','الرد'],
+  myChallenge:['Your own challenge (optional)','ردّك إنت (اختياري)'],
+  myChPh:['Write a challenge that makes sense to you…','اكتب رد يقنعك إنت…'],
   mInstall:['📲 Add to home screen','📲 أضِف للشاشة الرئيسية'],
   installText:['Add this to your home screen for one-tap access','أضِفها لشاشتك الرئيسية للوصول السريع'],
   installYes:['Add','إضافة'],
@@ -438,7 +481,7 @@ function applyLang(){
 }
 function toggleLang(){LANG=LANG==='ar'?'en':'ar';cfg.lang=LANG;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));applyLang();}
 function buildMenu(){
-  const items=[['mInstall','menuInstall()'],['mArchive','showArchive()'],['mCopy',"share('copy')"],['mWa','setTherapist()'],['mEmail','setEmail()'],
+  const items=[['mLearn','openLearn()'],['mInstall','menuInstall()'],['mArchive','showArchive()'],['mCopy',"share('copy')"],['mWa','setTherapist()'],['mEmail','setEmail()'],
     ['mReminder','openRem()'],['mSetPin','setPin()'],['mRemovePin','removePin()'],['mExport','exportAll()'],
     ['mImport','importAll()'],['mClose','closeMenu()']];
   document.getElementById('menuSheet').innerHTML=items.map(([k,fn])=>`<button onclick="${fn}">${t(k)}</button>`).join('');
@@ -491,6 +534,7 @@ function render(){
       <h3>${grName(g)}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
     if(gi===0)html+=`<button class="practicebtn" onclick="openMindPicker()">${L('🧘 Practice mindfulness','🧘 تمارين اليقظة')}</button>`;
     if(gi===1)html+=`<button class="practicebtn" style="background:linear-gradient(90deg,#f472b6,#a855f7)" onclick="openAsk()">${L('🤝 How firmly to ask / say no?','🤝 أطلب أو أرفض بقوة قد إيه؟')}</button>`;
+    if(gi===2)html+=`<button class="practicebtn" style="background:linear-gradient(90deg,#fbbf24,#f59e0b);color:#3b2a08" onclick="openMyths()">${t('mythsBtn')}</button>`;
     g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);
       const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
         <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`;
@@ -1166,6 +1210,129 @@ function askSummary(){
 function askToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+askSummary();save();render();toast(t('addedNotes'));closeAsk();}
 function askShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(askSummary());}
 function doneAsk(){state.skills['1_0']=true;save();render();toast(L('Decision noted 🤝','اتسجّل القرار 🤝'));closeAsk();}
+
+/* ===================== Learn the skills ===================== */
+// keyed "gi_si": [whatEn, whatAr, howEn, howAr]
+const SKILLS_INFO={
+ '0_0':["The balance of emotion mind and reasonable mind — your inner wisdom.","توازن العقل العاطفي والعقل المنطقي — حكمتك الجوّانية.","Pause, breathe, and ask your wise mind what fits; it answers calmly.","اهدأ، خد نفس، واسأل عقلك الحكيم إيه المناسب؛ بيرد بهدوء."],
+ '0_1':["Notice your experience — thoughts, feelings, sensations — without words.","لاحِظ تجربتك — أفكار ومشاعر وأحاسيس — من غير كلمات.","Watch what comes and goes through your senses; let it pass like clouds.","راقب اللي بييجي ويروح بحواسك؛ سيبه يعدّي زي السحب."],
+ '0_2':["Put words on what you observe — just the facts, no judgments.","حُط كلام على اللي بتلاحظه — الحقايق بس، من غير أحكام.","Name it: “I notice a thought…”, “I feel tightness…”. Stick to facts.","سمّيه: «ألاحظ فكرة…»، «حاسس بشد…». اتمسك بالحقايق."],
+ '0_3':["Throw yourself fully into the present activity, becoming one with it.","اندمج بالكامل في النشاط الحالي، وكن واحد معاه.","Drop self-consciousness and dive into what you’re doing right now.","سيب مراقبة نفسك واغطس في اللي بتعمله دلوقتي."],
+ '0_4':["See without labeling good or bad — just describe what is.","شوف من غير تقييم حلو أو وحش — بس اوصف اللي موجود.","Catch judgments, replace with facts; don’t judge your judging.","اكتشف الأحكام وبدّلها بحقايق؛ ومتحكمش على إنك حكمت."],
+ '0_5':["Do one thing at a time, with your full attention.","اعمل حاجة واحدة في المرة، بكامل انتباهك.","When the mind drifts, gently bring it back — again and again.","لما العقل يسرح، رجّعه بهدوء — مرة ورا مرة."],
+ '0_6':["Focus on what works to reach your goal, not on being “right”.","ركّز على اللي بيجيب نتيجة لهدفك، مش على إنك «صح».","Play by the rules of the situation; let go of “should”.","امشي على قواعد الموقف؛ وسيب «المفروض»."],
+ '1_0':["Get clear on what you want: the objective, the relationship, your self-respect.","وضّح اللي عايزه: الهدف، العلاقة، واحترامك لذاتك.","Rank your priorities before acting; the ask/say-no tool helps.","رتّب أولوياتك قبل ما تتصرف؛ أداة الطلب/الرفض بتساعد."],
+ '1_1':["A script to ask or say no: Describe, Express, Assert, Reinforce.","صيغة للطلب أو الرفض: صِف، عبّر، أكّد، عزّز.","Describe the facts, express feelings, assert the ask, reinforce the payoff.","صِف الحقايق، عبّر عن مشاعرك، أكّد طلبك، وعزّز الفايدة للطرف التاني."],
+ '1_2':["Stay on track in the conversation (the “M” of DEAR MAN).","خليك ثابت في المحادثة (الـ«M» في DEAR MAN).","Broken record — calmly repeat your ask; ignore attacks and side-tracks.","اسطوانة مشروخة — كرّر طلبك بهدوء؛ وتجاهل الهجوم والتشتيت."],
+ '1_3':["Look confident and be willing to give a little to get.","اظهر بثقة وكن مستعد تدّي شوية علشان تاخد.","Steady voice and posture; offer alternatives and find a middle ground.","صوت ووقفة ثابتين؛ اعرض بدائل والاقي حل وسط."],
+ '1_4':["Keep the relationship good: Gentle, Interested, Validate, Easy manner.","حافظ على العلاقة: لُطف، اهتمام، تصديق، أسلوب هادي.","Be kind, listen, acknowledge their view, and keep it light.","كن لطيف، اسمع، صدّق وجهة نظرهم، وخليها خفيفة."],
+ '1_5':["Keep your self-respect: Fair, no over-Apologies, Stick to values, Truthful.","حافظ على احترامك لذاتك: عادل، من غير اعتذار زايد، تمسّك بقيمك، صادق.","Be fair to both sides, don’t over-apologize, hold your values, be honest.","كن عادل مع الطرفين، متعتذرش زيادة، اتمسك بقيمك، وكن صادق."],
+ '1_6':["Care for relationships before they break — build and repair them.","اهتم بعلاقاتك قبل ما تتكسر — ابنيها وأصلحها.","Stay in contact, balance give-and-take, address problems early.","فضل على تواصل، وازن الأخذ والعطاء، وعالج المشاكل بدري."],
+ '2_0':["Name an emotion and its parts: trigger, body, urge, aftereffects.","سمّي الشعور وأجزاءه: المحفّز، الجسم، الرغبة، التأثير بعده.","Mapping an emotion this way loosens its grip on you.","إنك تفهم الشعور بالطريقة دي بيقلل سيطرته عليك."],
+ '2_1':["Test whether an emotion fits the facts, or fits your interpretation.","اختبر هل الشعور مناسب للحقايق ولا لتفسيرك.","Separate facts from assumptions, then decide if it fits.","افصل الحقايق عن الافتراضات، وبعدين قرر لو مناسب."],
+ '2_2':["When an emotion doesn’t fit or doesn’t help, act opposite to its urge.","لما الشعور مش مناسب أو مش مفيد، اعمل عكس رغبته.","Do the opposite all the way — face, posture, words — until it shifts.","اعمل العكس للآخر — الوش، الوقفة، الكلام — لغاية ما يتغير."],
+ '2_3':["When the facts themselves are the problem, change the situation.","لما الحقايق نفسها هي المشكلة، غيّر الموقف.","Define it, set a goal, brainstorm, choose, plan, try, then evaluate.","حدّدها، اعمل هدف، فكّر بحلول، اختار، خطّط، جرّب، وقيّم."],
+ '2_4':["Build positive events now, and a life worth living long-term.","زوّد الأحداث الإيجابية دلوقتي، وابني حياة تستاهل على المدى البعيد.","Do one pleasant thing daily; act toward your values and goals.","اعمل حاجة لطيفة كل يوم؛ وتحرّك ناحية قيمك وأهدافك."],
+ '2_5':["Do things that make you feel competent and capable.","اعمل حاجات تحسّسك بالكفاءة والقدرة.","Pick something slightly challenging daily; raise difficulty gradually.","اختار حاجة فيها تحدي بسيط كل يوم؛ وزوّد الصعوبة بالتدريج."],
+ '2_6':["Rehearse a hard situation in advance so you’re ready for it.","اتمرّن على موقف صعب قبل ما يحصل علشان تبقى جاهز له.","Imagine it vividly, picture coping skillfully, relax, and repeat.","تخيّله بوضوح، وتخيّل نفسك بتتعامل بمهارة، استرخي، وكرّر."],
+ '2_7':["Reduce vulnerability to Emotion Mind by caring for your body.","قلّل قابليتك للانفعال عن طريق العناية بجسمك.","Treat illness, eat balanced, avoid substances, sleep, exercise.","عالج الأمراض، أكل متوازن، ابعد عن المكيفات، نوم، رياضة."],
+ '2_8':["Be present with an emotion without acting on it or pushing it away.","خليك حاضر مع الشعور من غير ما تتصرف عليه أو تبعده.","Observe it like a wave; let it rise and fall — it passes.","لاحظه زي موجة؛ سيبه يعلى وينزل — بيعدّي."],
+ '3_0':["Stop a crisis reaction before it runs away with you.","أوقف رد فعل الأزمة قبل ما يسيطر عليك.","Stop · Take a step back · Observe · Proceed mindfully.","قف · ارجع خطوة · لاحظ · كمّل بوعي."],
+ '3_1':["Calm intense arousal fast, through your body.","هدّي الانفعال الشديد بسرعة، عن طريق جسمك.","Cold water/Temperature, Intense exercise, Paced breathing, muscle relax.","مياه باردة/حرارة، تمرين عنيف، تنفّس بإيقاع، استرخاء العضلات."],
+ '3_2':["Weigh acting on an urge vs resisting it before you decide.","وازن بين تنفيذ الرغبة ومقاومتها قبل ما تقرر.","List pros and cons of both, then choose with wise mind.","اكتب مميزات وعيوب الاتنين، وبعدين اختار بعقلك الحكيم."],
+ '3_3':["Get through a crisis moment without making it worse.","عدّي لحظة الأزمة من غير ما تزوّدها سوء.","Distract, soothe your five senses, and improve the moment.","شتّت، هدّي حواسك الخمسة، وحسّن اللحظة."],
+ '3_4':["Accept reality fully as it is — to stop adding suffering on top of pain.","اقبل الواقع بالكامل زي ما هو — علشان تبطّل تزوّد معاناة فوق الألم.","Acknowledge the facts and their causes; accept with mind and body.","اعترف بالحقايق وأسبابها؛ واقبل بعقلك وجسمك."],
+ '3_5':["Do what the moment effectively needs — the opposite of stubborn resistance.","اعمل اللي الموقف محتاجه فعليًا — عكس العناد والمقاومة.","Open your hands and posture; choose to take part in life as it is.","افتح إيديك ووقفتك؛ واختار تشارك في الحياة زي ما هي."],
+ '3_6':["Notice thoughts as thoughts — not facts and not commands.","لاحظ الأفكار كأفكار — مش حقايق ولا أوامر.","Watch them come and go; you are not your thoughts.","راقبها وهي بتيجي وتروح؛ إنت مش أفكارك."],
+ '3_7':["Accept reality with your body, through a slight relaxed smile.","اقبل الواقع بجسمك، عن طريق ابتسامة خفيفة مرتاحة.","Relax your face and lift the corners of your lips a little.","ريّح وشك وارفع أطراف شفايفك شوية."],
+ '3_8':["Accept reality with your body, through open, unclenched hands.","اقبل الواقع بجسمك، عن طريق أيدي مفتوحة غير مقبوضة.","Unclench your fists and turn your palms open — it signals openness.","افتح قبضتك وخلي راحة إيدك مفتوحة — ده بيبعت إشارة تقبّل."],
+};
+const LAUNCH={'0_0':'openMindPicker()','0_1':'openMindPicker()','0_2':'openMindPicker()','0_3':'openMindPicker()','0_4':'openMindPicker()','0_5':'openMindPicker()','0_6':'openMindPicker()','1_0':'openAsk()','1_1':'openAsk()','2_0':'openCTF()','2_1':'openCTF()','3_4':'raOpen()'};
+let learn={};
+function openLearn(){closeMenu();learn={view:'home'};document.getElementById('learn').classList.add('show');renderLearn();}
+function closeLearn(){document.getElementById('learn').classList.remove('show');}
+function learnHome(){learn.view='home';renderLearn();}
+function learnModule(gi){learn.view='module';learn.gi=gi;renderLearn();}
+function learnSkill(gi,si){learn.view='skill';learn.gi=gi;learn.si=si;renderLearn();}
+function renderLearn(){
+  const chev=LANG==='ar'?'‹':'›';const b=document.getElementById('learnBody');b.scrollTop=0;
+  if(learn.view==='home'){
+    document.getElementById('learnTitle').textContent=t('learnTitle');
+    let h=GROUPS.map((g,gi)=>`<button class="lrow" onclick="learnModule(${gi})"><span class="dot" style="background:${g.color}"></span><span class="lt"><b>${grName(g)}</b><small>${g.skills.length} ${L('skills','مهارة')}</small></span><span class="chev">${chev}</span></button>`).join('');
+    h+=`<button class="lrow" onclick="closeLearn();openMyths()"><span style="font-size:22px">🧠</span><span class="lt"><b>${L('Myths about emotions','خرافات عن المشاعر')}</b><small>${L('20 myths + challenges','٢٠ خرافة + ردود')}</small></span><span class="chev">${chev}</span></button>`;
+    b.innerHTML=h;
+    document.getElementById('learnNav').innerHTML=`<div class="navin"><button class="next" onclick="closeLearn()">${L('Close','إغلاق')}</button></div>`;
+  } else if(learn.view==='module'){
+    const g=GROUPS[learn.gi];document.getElementById('learnTitle').textContent=grName(g);
+    b.innerHTML=g.skills.map((s,si)=>`<button class="lrow" onclick="learnSkill(${learn.gi},${si})"><span class="lt"><b>${skName(s)}</b></span><span class="chev">${chev}</span></button>`).join('');
+    document.getElementById('learnNav').innerHTML=`<div class="navin"><button class="back" onclick="learnHome()">${L('Back','رجوع')}</button></div>`;
+  } else {
+    const g=GROUPS[learn.gi],s=g.skills[learn.si],info=SKILLS_INFO[learn.gi+'_'+learn.si]||[];
+    document.getElementById('learnTitle').textContent=skName(s);
+    let h=`<p class="step-q">${skName(s)}</p>`;
+    if(info[0])h+=`<div class="infosec"><div class="ih">${t('iWhat')}</div><p>${L(info[0],info[1])}</p></div>`;
+    if(info[2])h+=`<div class="infosec"><div class="ih">${t('iHow')}</div><p>${L(info[2],info[3])}</p></div>`;
+    const ln=LAUNCH[learn.gi+'_'+learn.si];
+    if(ln)h+=`<button class="ctfopen" style="background:var(--accent)" onclick="closeLearn();${ln}">${t('iTry')}</button>`;
+    b.innerHTML=h;
+    document.getElementById('learnNav').innerHTML=`<div class="navin"><button class="back" onclick="learnModule(${learn.gi})">${L('Back','رجوع')}</button></div>`;
+  }
+}
+
+/* ===================== Myths about emotions ===================== */
+const MYTHS=[
+ ["There is a right way to feel in every situation.","فيه طريقة صح للإحساس في كل موقف.","Everyone responds differently. There is no single correct way.","كل شخص بيرد بشكل مختلف. مفيش طريقة واحدة صح."],
+ ["Letting others know I feel bad is a weakness.","لو الناس عرفت إني حاسس بسوء يبقى ده ضعف.","Sharing how I feel is a healthy form of communication.","إني أشارك مشاعري ده تواصل صحي."],
+ ["Negative feelings are bad and destructive.","المشاعر السلبية سيئة ومدمرة.","Negative feelings are natural and help me understand a situation.","المشاعر السلبية طبيعية وبتساعدني أفهم الموقف."],
+ ["Being emotional means being out of control.","إني أكون عاطفي يعني فاقد السيطرة.","Being emotional means being a normal human being.","إني أكون عاطفي يعني إني إنسان طبيعي."],
+ ["Some emotions are stupid.","بعض المشاعر غبية.","Every emotion is useful for understanding what I’m experiencing.","كل شعور مفيد عشان أفهم اللي بمرّ بيه."],
+ ["All painful emotions come from a bad attitude.","كل المشاعر المؤلمة سببها تصرف أو مزاج غلط.","All painful emotions are natural responses to something.","كل المشاعر المؤلمة ردود طبيعية لحاجة."],
+ ["If others don’t approve of my feelings, I shouldn’t feel them.","لو الناس مش موافقة على مشاعري، يبقى مش المفروض أحسها.","I have every right to feel as I do, whatever others think.","من حقي أحس زي ما أنا حاسس، مهما الناس فكرت."],
+ ["Other people are the best judges of how I feel.","الناس التانية أحسن حد يحكم على إحساسي.","I am the best judge of how I feel; others can only guess.","أنا أحسن حد يحكم على إحساسي؛ غيري بيخمّن بس."],
+ ["Painful emotions aren’t important and should be ignored.","المشاعر المؤلمة مش مهمة والمفروض أتجاهلها.","Painful emotions can be warning signs that something is off.","المشاعر المؤلمة ممكن تكون إنذار إن فيه حاجة غلط."],
+ ["Extreme emotions get you further than regulating them.","المشاعر المتطرفة بتوصّلك أبعد من إنك تنظّمها.","Extreme emotions often cause trouble; regulating helps more.","المشاعر المتطرفة غالبًا بتعمل مشاكل؛ التنظيم بيساعد أكتر."],
+ ["Creativity requires intense, out-of-control emotions.","الإبداع محتاج مشاعر شديدة وخارجة عن السيطرة.","I can be in control of my emotions and still be creative.","أقدر أتحكم في مشاعري وأفضل مبدع."],
+ ["Drama is cool.","الدراما حلوة وجذابة.","I can be dramatic and still regulate my emotions.","أقدر أكون درامي وأنظّم مشاعري برضه."],
+ ["It is inauthentic to try to change my emotions.","إني أحاول أغيّر مشاعري ده تزييف لنفسي.","Change is itself authentic; it’s part of life.","التغيير نفسه أصيل؛ وده جزء من الحياة."],
+ ["Emotional truth is what counts, not factual truth.","الحقيقة العاطفية هي اللي تهم، مش حقيقة الوقائع.","Both emotional feeling and facts matter.","الإحساس العاطفي والحقايق الاتنين مهمين."],
+ ["People should do whatever they feel like doing.","الناس المفروض تعمل اللي حاسة بيه أيًا كان.","Doing whatever I feel like can be ineffective.","إني أعمل اللي حاسس بيه ممكن يكون مش فعّال."],
+ ["Acting on your emotions is the mark of a truly free person.","التصرف بناء على مشاعرك علامة الشخص الحر فعلًا.","The truly free person can regulate their emotions.","الشخص الحر فعلًا يقدر ينظّم مشاعره."],
+ ["My emotions are who I am.","مشاعري هي أنا.","Emotions are partly, but not completely, who I am.","المشاعر جزء مني، بس مش كل اللي أنا هو."],
+ ["My emotions are why people love me.","مشاعري هي سبب إن الناس بتحبني.","People will still love me if I regulate my emotions.","الناس هتفضل تحبني لو نظّمت مشاعري."],
+ ["Emotions can just happen for no reason.","المشاعر ممكن تحصل من غير سبب.","Everything has a cause, even when I can’t see it.","كل حاجة ليها سبب، حتى لو مش شايفه."],
+ ["Emotions should always be trusted.","المشاعر المفروض أثق فيها دايمًا.","Emotions should sometimes be trusted — not always.","المشاعر المفروض أثق فيها أحيانًا — مش دايمًا."],
+];
+const MYTHS_INTRO=[
+  "In DBT, emotions aren’t “good” or “bad” — every emotion has a function and makes sense given its causes. But we all pick up <b>myths</b> about emotions (e.g. “negative feelings are bad,” “being emotional means being out of control”). These beliefs add a <i>second layer of suffering</i> and push us to suppress, judge, or over-trust our feelings.<br><br>The skill is to <b>catch each myth and answer it with a challenge</b> — a truer, more balanced statement. Below are 20 common myths, each with a challenge. Read them, then write your own challenge in your words — that’s what makes it stick.",
+  "في الـDBT، المشاعر مش «حلوة» ولا «وحشة» — كل شعور ليه وظيفة وله معنى حسب أسبابه. بس كلنا بنتشرب <b>خرافات</b> عن المشاعر (زي «المشاعر السلبية وحشة»، «إنك تكون عاطفي يعني فاقد السيطرة»). المعتقدات دي بتزوّد <i>طبقة تانية من المعاناة</i>، وبتدفعنا نكبت مشاعرنا أو نحكم عليها أو نثق فيها زيادة.<br><br>المهارة إنك <b>تمسك كل خرافة وتردّ عليها برد</b> متوازن وأقرب للحقيقة. تحت هتلاقي ٢٠ خرافة شائعة، كل واحدة معاها رد. اقراهم، وبعدين اكتب ردّك بكلماتك إنت — ده اللي بيثبّت الفكرة.",
+];
+let myth={};
+function openMyths(){myth={step:'intro',i:0,mine:JSON.parse(localStorage.getItem('dbt_myths')||'{}')};document.getElementById('myth').classList.add('show');renderMyth();}
+function closeMyths(){document.getElementById('myth').classList.remove('show');render();}
+function mythStart(){myth.step='card';myth.i=0;renderMyth();}
+function mythSave(v){myth.mine[myth.i]=v;localStorage.setItem('dbt_myths',JSON.stringify(myth.mine));}
+function mythGo(d){myth.i=(myth.i+d+MYTHS.length)%MYTHS.length;renderMyth();}
+function renderMyth(){
+  const b=document.getElementById('mythBody');b.scrollTop=0;
+  if(myth.step==='intro'){
+    document.getElementById('mythTitle').textContent=t('mythsTitle');
+    document.getElementById('mythProg').style.width='0%';
+    b.innerHTML=`<p class="step-q">🧠 ${t('mythsTitle')}</p><p class="step-h" style="font-size:15px;line-height:1.6">${L(MYTHS_INTRO[0],MYTHS_INTRO[1])}</p>`;
+    document.getElementById('mythNav').innerHTML=`<div class="navin"><button class="back" onclick="closeMyths()">${L('Close','إغلاق')}</button><button class="next" onclick="mythStart()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
+    return;
+  }
+  const m=MYTHS[myth.i];
+  document.getElementById('mythTitle').textContent=t('mythsTitle')+' · '+(myth.i+1)+'/'+MYTHS.length;
+  document.getElementById('mythProg').style.width=((myth.i+1)/MYTHS.length*100)+'%';
+  b.innerHTML=
+    `<p class="mythq">“${L(m[0],m[1])}”</p>
+     <div class="mythch"><span class="cl">${t('mythChallenge')}</span>${L(m[2],m[3])}</div>
+     <div class="lab" style="margin-top:16px">${t('myChallenge')}</div>
+     <textarea placeholder="${t('myChPh')}" oninput="mythSave(this.value)">${myth.mine[myth.i]||''}</textarea>`;
+  const last=myth.i===MYTHS.length-1;
+  const backFn=myth.i===0?"myth.step='intro';renderMyth()":"mythGo(-1)";
+  document.getElementById('mythNav').innerHTML=`<div class="navin"><button class="back" onclick="${backFn}">${L('Back','رجوع')}</button><button class="next" onclick="${last?'closeMyths()':'mythGo(1)'}">${last?L('Done','تمام'):L('Next','التالي')}</button></div>`;
+}
 
 curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
