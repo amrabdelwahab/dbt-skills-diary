@@ -367,6 +367,16 @@
   <div class="nav" id="askNav"></div>
 </div>
 
+<!-- I need help (skill finder) -->
+<div class="ctf" id="help">
+  <div class="top">
+    <button class="x" onclick="helpBack()">‹</button>
+    <h2 id="helpTitle">I need help</h2>
+  </div>
+  <div class="body" id="helpBody"></div>
+  <div class="nav" id="helpNav"></div>
+</div>
+
 <!-- Guided tools hub -->
 <div class="ctf" id="tools">
   <div class="top">
@@ -627,6 +637,7 @@ function card(ic,col,fn,t1,t2){return `<button class="homecard" style="border-in
 function renderHome(){
   document.getElementById('homeView').innerHTML=
     `<div class="homehero"><h1>${L('DBT Skills Diary','مذكرة مهارات DBT')}</h1><p>${L('Your daily skills companion','رفيقك اليومي للمهارات')}</p></div>`
+    +card('🆘','#ef4444','openHelp()',L('I need help','محتاج مساعدة'),L('Answer a few questions → find the right skill','جاوب كام سؤال ← لاقي المهارة المناسبة'))
     +card('📓','#6366f1','showDay()',L('Daily diary','المذكرة اليومية'),L('Check off today’s skills & send to your therapist','علّم مهارات اليوم وابعتها للمعالج'))
     +card('📖','#a855f7','openLearn()',L('Learn the skills','اتعلّم المهارات'),L('Read about every DBT skill','اقرأ عن كل مهارة'))
     +card('🧘','#0ea5e9','openMindPicker()',L('Practice mindfulness','تمارين اليقظة'),L('Guided breathing & grounding','تمارين تنفّس وتأريض موجّهة'))
@@ -1568,6 +1579,7 @@ function dearToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.
 
 /* ===================== Guided tools hub ===================== */
 const TOOLS=[
+  ['🆘','#ef4444','openHelp()','I need help','محتاج مساعدة','Find the right skill now','لاقي المهارة المناسبة دلوقتي'],
   ['🧭','#6366f1','openCTF()','Check the Facts','مراجعة الحقائق','Does the emotion fit the facts?','هل الشعور مناسب للحقايق؟'],
   ['🌳','#34d399','raOpen()','Radical Acceptance','القبول الجذري','Accept what you can’t change','اقبل اللي مش قادر تغيّره'],
   ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس وتأريض'],
@@ -1575,6 +1587,65 @@ const TOOLS=[
   ['🗣️','#a855f7','openDear()','DEAR MAN script','رسالة DEAR MAN','Build what to actually say','اكتب اللي هتقوله فعلًا'],
   ['🧠','#f59e0b','openMyths()','Myths about emotions','خرافات عن المشاعر','Challenge unhelpful beliefs','اتحدّى المعتقدات المؤذية'],
 ];
+/* ----- I need help: skill finder ----- */
+const HELP_NODES={
+  start:{q:['What’s going on right now?','إيه اللي بيحصل دلوقتي؟'],opts:[
+    ['😣','I’m overwhelmed / in crisis','إحساس جارف / في أزمة','res:crisis'],
+    ['🌊','A strong or painful emotion','شعور قوي أو مؤلم','res:emotion'],
+    ['👥','A person or a conflict','شخص أو خلاف','res:people'],
+    ['🌀','Racing mind / can’t focus','تفكير متسارع / مش قادر أركّز','res:mindful'],
+    ['🪨','Something I can’t change','حاجة مش قادر أغيّرها','res:accept'],
+  ]},
+};
+const HELP_RES={
+  crisis:{title:['Get through the moment','عدّي اللحظة'],intro:['First bring the intensity down, then decide. Distress-tolerance skills:','الأول نزّل الشدة، وبعدين قرر. مهارات تجاوز المحن:'],items:[
+    ['🫁','Paced breathing','تنفّس بإيقاع','Slow your body down','هدّي جسمك',"openMindId('box')"],
+    ['🛑','STOP — pause first','قف — اتوقف الأول','Don’t act on the urge yet','متتصرفش على الرغبة لسه','openLearnAt(3,0)'],
+    ['🧊','TIP — cool down fast','TIP — هدّي بسرعة','Cold / exercise / breathing','تلج / تمرين / تنفّس','openLearnAt(3,1)'],
+    ['🎧','Distract / self-soothe','تشتيت / تهدئة الذات','Get through safely','عدّي بأمان','openLearnAt(3,3)'],
+  ]},
+  emotion:{title:['Work with the emotion','اشتغل على الشعور'],intro:['Check if it fits the facts, then choose:','شوف هل مناسب للحقايق، وبعدين اختار:'],items:[
+    ['🧭','Check the Facts','مراجعة الحقائق','Does it fit the situation?','هل مناسب للموقف؟','openCTF()'],
+    ['🔄','Opposite Action','فعل العكس','If it doesn’t fit / doesn’t help','لو مش مناسب / مش مفيد','openLearnAt(2,2)'],
+    ['🧩','Problem Solving','حل المشكلة','If the facts are the problem','لو الحقايق هي المشكلة','openLearnAt(2,3)'],
+  ]},
+  people:{title:['Handle the interaction','اتعامل مع الموقف'],intro:['Decide your goal, then how to say it:','حدّد هدفك، وبعدين إزاي تقوله:'],items:[
+    ['🤝','How firmly to ask / say no','أطلب أو أرفض بقوة قد إيه','Weigh the situation','وازن الموقف','openAsk()'],
+    ['🗣️','DEAR MAN script','رسالة DEAR MAN','Build what to say','اكتب اللي هتقوله','openDear()'],
+    ['💗','GIVE — keep the relationship','GIVE — حافظ على العلاقة','Read how','اقرأ إزاي','openLearnAt(1,4)'],
+    ['🛡️','FAST — keep self-respect','FAST — حافظ على احترامك','Read how','اقرأ إزاي','openLearnAt(1,5)'],
+  ]},
+  mindful:{title:['Come back to the present','ارجع للحظة'],intro:['Ground yourself and steady your attention:','اتأرّض وثبّت انتباهك:'],items:[
+    ['🖐️','Grounding 5-4-3-2-1','تمرين الحواس ٥-٤-٣-٢-١','Anchor with your senses','اربط نفسك بحواسك',"openMindId('senses')"],
+    ['🫁','Observe your breath','لاحظ نفسك','Settle the mind','هدّي العقل',"openMindId('breath')"],
+    ['☯️','Wise Mind','العقل الحكيم','Find your center','الاقي مركزك',"openMindId('wise')"],
+    ['🧘','All practices','كل التمارين','Open the picker','افتح القائمة','openMindPicker()'],
+  ]},
+  accept:{title:['Accept what you can’t change','اقبل اللي مش قادر تغيّره'],intro:['When fighting reality only adds suffering:','لما محاربة الواقع بتزوّد المعاناة بس:'],items:[
+    ['🌳','Radical Acceptance','القبول الجذري','Guided walkthrough','خطوة بخطوة','raOpen()'],
+    ['🙌','Willingness','الاستعداد والتقبّل','Read how','اقرأ إزاي','openLearnAt(3,5)'],
+    ['🙂','Half-smile / Willing hands','نص ابتسامة / أيدي متقبلة','Accept with the body','اقبل بجسمك','openLearnAt(3,7)'],
+  ]},
+};
+let help={};
+function openHelp(){help={stack:['start']};document.getElementById('help').classList.add('show');renderHelp();}
+function closeHelp(){document.getElementById('help').classList.remove('show');render();}
+function helpGo(id){help.stack.push(id);renderHelp();}
+function helpBack(){help.stack.pop();if(!help.stack.length)closeHelp();else renderHelp();}
+function renderHelp(){
+  const cur=help.stack[help.stack.length-1],b=document.getElementById('helpBody');b.scrollTop=0;
+  document.getElementById('helpTitle').textContent=L('I need help','محتاج مساعدة');
+  if(cur.slice(0,4)==='res:'){
+    const r=HELP_RES[cur.slice(4)];
+    b.innerHTML=`<p class="step-q">${L(r.title[0],r.title[1])}</p>`+(r.intro?`<p class="step-h">${L(r.intro[0],r.intro[1])}</p>`:'')
+      +r.items.map(it=>`<button class="homecard" onclick="closeHelp();${it[5]}"><span class="hci">${it[0]}</span><span class="hct"><b>${L(it[1],it[2])}</b><small>${L(it[3],it[4])}</small></span></button>`).join('');
+  } else {
+    const n=HELP_NODES[cur];
+    b.innerHTML=`<p class="step-q">${L(n.q[0],n.q[1])}</p>`
+      +n.opts.map(o=>`<button class="homecard" onclick="helpGo('${o[3]}')"><span class="hci">${o[0]}</span><span class="hct"><b>${L(o[1],o[2])}</b></span></button>`).join('');
+  }
+  document.getElementById('helpNav').innerHTML=`<div class="navin"><button class="next" onclick="closeHelp()">${L('Close','إغلاق')}</button></div>`;
+}
 function openTools(){document.getElementById('tools').classList.add('show');renderTools();}
 function closeTools(){document.getElementById('tools').classList.remove('show');}
 function renderTools(){
