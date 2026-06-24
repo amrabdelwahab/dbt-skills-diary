@@ -1299,6 +1299,7 @@ function renderAsk(){
     <div class="bandbox"><div class="bt">${L(bd[0],bd[1])}</div></div>
     <div class="lab">${L('Quick gut-check','مراجعة سريعة')}</div>
     <ul class="steplist">`+short.map(s=>`<li>${L(s[0],s[1])}</li>`).join('')+`</ul>
+    <button class="ctfopen" style="background:var(--accent)" onclick="closeAsk();openDear()">${L('🗣️ Next: build what to say — DEAR MAN','🗣️ بعدين: اكتب اللي هتقوله — DEAR MAN')}</button>
     <button class="ctfopen" style="background:var(--accent2)" onclick="askToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
     <button class="canttell" onclick="askShare()">${L('📲 Send to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>
     <button class="canttell" onclick="navigator.clipboard.writeText(askSummary()).then(()=>toast(t('copied')))">${L('📋 Copy','📋 نسخ')}</button>`;
