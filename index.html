@@ -40,8 +40,11 @@
     color:var(--ink);padding:10px;font:inherit;resize:vertical;min-height:64px}
   .group{margin:18px 0 6px;display:flex;align-items:center;gap:8px}
   .dot{width:10px;height:10px;border-radius:50%}
-  .group h3{margin:0;font-size:15px;font-weight:700;flex:1;min-width:0}
+  .group h3{margin:0;font-size:15px;font-weight:700;min-width:0}
   .group .count{flex:none;color:var(--muted);font-size:13px}
+  .ghinfo{background:none;border:0;color:var(--muted);font-size:17px;padding:0;line-height:1}
+  .ghinfo:active{color:var(--accent)}
+  .ghtrail{flex:none;margin-inline-start:auto;display:flex;align-items:center;gap:8px}
   .ghchips{flex:none;display:flex;gap:6px;margin-inline-start:4px}
   .ghchip{background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:16px;
     padding:5px 9px;font-size:14px;line-height:1;display:inline-flex;align-items:center}
@@ -152,6 +155,19 @@
   .installbar .it{flex:1;font-size:14px;font-weight:600;line-height:1.35}
   .installbar .yes{background:#fff;color:#4f46e5;border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:14px;white-space:nowrap}
   .installbar .no{background:#ffffff33;color:#fff;border:0;border-radius:10px;width:34px;height:38px;font-size:16px}
+  .homehero{text-align:center;padding:26px 10px 10px}
+  .homehero h1{margin:0;font-size:24px}
+  .homehero p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .homecard{display:flex;align-items:center;gap:14px;width:100%;text-align:start;background:var(--card);
+    border:1px solid var(--line);border-inline-start:4px solid var(--accent);border-radius:16px;padding:18px;margin:11px 0;color:var(--ink)}
+  .homecard:active{background:var(--card2)}
+  .homecard .hci{font-size:30px;flex:none}
+  .homecard .hct b{font-size:17px;display:block}
+  .homecard .hct small{color:var(--muted);font-size:13px;line-height:1.4}
+  .homerow{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .homemini{flex:1 1 0;min-width:104px;display:flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 8px;font-size:13px;font-weight:700}
+  .homemini:active{border-color:var(--accent)}
   .practicebtn{display:block;width:100%;margin:4px 0 6px;background:linear-gradient(90deg,#0ea5e9,#6366f1);
     color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700}
   .toolchips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
@@ -236,10 +252,11 @@
     <div class="date" id="dateLine"></div>
   </div>
   <div class="nav">
-    <button class="langbtn" onclick="openLearn()" title="Learn the skills" aria-label="Learn the skills">📖</button>
+    <button class="langbtn" id="homeBtn" onclick="showHome()" title="Home" aria-label="Home">🏠</button>
+    <button class="langbtn" id="menuBtn" onclick="openMenu()" title="Menu" aria-label="Menu">⋯</button>
     <button class="langbtn" id="langBtn" onclick="toggleLang()">ع</button>
-    <button onclick="step(-1)" title="Previous day">‹</button>
-    <button onclick="step(1)" title="Next day">›</button>
+    <button id="dnPrev" onclick="step(-1)" title="Previous day">‹</button>
+    <button id="dnNext" onclick="step(1)" title="Next day">›</button>
   </div>
 </header>
 
@@ -260,6 +277,8 @@
     <textarea id="notes" placeholder="Anything you want to add — urges, wins, what was hard…"></textarea>
   </div>
 </div>
+
+<div class="wrap" id="homeView" style="display:none"></div>
 
 <div class="wrap" id="archiveView" style="display:none">
   <div id="archiveList"></div>
@@ -346,6 +365,16 @@
   <div class="prog"><i id="askProg"></i></div>
   <div class="body" id="askBody"></div>
   <div class="nav" id="askNav"></div>
+</div>
+
+<!-- Guided tools hub -->
+<div class="ctf" id="tools">
+  <div class="top">
+    <button class="x" onclick="closeTools()">✕</button>
+    <h2 id="toolsTitle">Guided tools</h2>
+  </div>
+  <div class="body" id="toolsBody"></div>
+  <div class="nav" id="toolsNav"></div>
 </div>
 
 <!-- Mindfulness practice -->
@@ -510,7 +539,8 @@ function applyLang(){
   document.getElementById('installText').textContent=t('installText');
   document.getElementById('installYes').textContent=t('installYes');
   buildMenu();
-  if(view==='archive'){showArchive();}
+  if(view==='home'){showHome();}
+  else if(view==='archive'){showArchive();}
   else{document.getElementById('title').textContent=t('appTitle');render();}
   maybeShowInstall();
   try{caches.open('dbt-cfg').then(c=>c.put('/lang',new Response(LANG)));}catch(_){}  // let the SW localize push text
@@ -566,10 +596,11 @@ function render(){
   let html='';
   GROUPS.forEach((g,gi)=>{
     const done=g.skills.filter((_,si)=>state.skills[gi+'_'+si]).length;
-    const tm={0:['🧘 '+L('Practice','تمارين'),'openMindPicker()'],2:['🧠 '+L('Myths','خرافات'),'openMyths()']}[gi];
-    const gchips=`<button class="ghchip" onclick="openLearnModule(${gi})" aria-label="${L('Module guide','دليل الموديول')}">📖</button>`
-      +(tm?`<button class="ghchip" onclick="${tm[1]}" aria-label="tool">${tm[0]}</button>`:'');
-    html+=`<div class="group"><span class="dot" style="background:${g.color}"></span><h3>${grName(g)}</h3><span class="ghchips">${gchips}</span><span class="count">${done}/${g.skills.length}</span></div>`;
+    const tm={0:['🧘 '+L('Practice','تمارين'),'openMindPicker()','#0ea5e9','#fff'],2:['🧠 '+L('Myths','خرافات'),'openMyths()','#f59e0b','#3b2a08']}[gi];
+    const toolChip=tm?`<button class="ghchip" style="background:${tm[2]};border-color:${tm[2]};color:${tm[3]}" onclick="${tm[1]}">${tm[0]}</button>`:'';
+    html+=`<div class="group"><span class="dot" style="background:${g.color}"></span><h3>${grName(g)}</h3>`+
+      `<button class="ghinfo" onclick="openLearnModule(${gi})" aria-label="${L('Module guide','دليل الموديول')}">ⓘ</button>`+
+      `<span class="ghtrail">${toolChip}<span class="count">${done}/${g.skills.length}</span></span></div>`;
     g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);const ln=LAUNCH[id];
       html+=`<div class="srow"><div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
         <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`+
@@ -588,14 +619,43 @@ function shiftKey(k,d){const dt=keyToDate(k);dt.setDate(dt.getDate()+d);
   return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
 
 /* ---------- views ---------- */
+function setHeader(v){
+  const sh=(id,show)=>{const e=document.getElementById(id);if(e)e.style.display=show?'':'none';};
+  sh('homeBtn',v!=='home'); sh('menuBtn',v!=='day'); sh('dnPrev',v==='day'); sh('dnNext',v==='day');
+}
+function card(ic,col,fn,t1,t2){return `<button class="homecard" style="border-inline-start-color:${col}" onclick="${fn}"><span class="hci">${ic}</span><span class="hct"><b>${t1}</b><small>${t2}</small></span></button>`;}
+function renderHome(){
+  document.getElementById('homeView').innerHTML=
+    `<div class="homehero"><h1>${L('DBT Skills Diary','مذكرة مهارات DBT')}</h1><p>${L('Your daily skills companion','رفيقك اليومي للمهارات')}</p></div>`
+    +card('📓','#6366f1','showDay()',L('Daily diary','المذكرة اليومية'),L('Check off today’s skills & send to your therapist','علّم مهارات اليوم وابعتها للمعالج'))
+    +card('📖','#a855f7','openLearn()',L('Learn the skills','اتعلّم المهارات'),L('Read about every DBT skill','اقرأ عن كل مهارة'))
+    +card('🧘','#0ea5e9','openMindPicker()',L('Practice mindfulness','تمارين اليقظة'),L('Guided breathing & grounding','تمارين تنفّس وتأريض موجّهة'))
+    +card('🧰','#22c55e','openTools()',L('Guided tools','الأدوات الموجّهة'),L('Check the Facts, DEAR MAN, and more','مراجعة الحقائق، DEAR MAN، وأكتر'))
+    +`<div class="homerow">`
+      +`<button class="homemini" onclick="openRem()">⏰ <span>${L('Reminder','تذكير')}</span></button>`
+      +`<button class="homemini" onclick="showArchive()">🗂️ <span>${L('Archive','الأرشيف')}</span></button>`
+      +(isStandalone()?'':`<button class="homemini" onclick="menuInstall()">📲 <span>${L('Add to Home Screen','أضف للشاشة')}</span></button>`)
+    +`</div>`;
+}
+function showHome(){view='home';if(location.hash)history.replaceState(null,'','./');
+  document.getElementById('homeView').style.display='';
+  document.getElementById('dayView').style.display='none';
+  document.getElementById('archiveView').style.display='none';
+  document.getElementById('dayBar').style.display='none';
+  document.getElementById('archiveBar').style.display='none';
+  document.getElementById('title').textContent=t('appTitle');
+  document.getElementById('dateLine').textContent='';
+  setHeader('home');renderHome();window.scrollTo(0,0);}
 function showDay(){view='day';if(location.hash)history.replaceState(null,'','./');document.getElementById('dayView').style.display='';
+  document.getElementById('homeView').style.display='none';
   document.getElementById('archiveView').style.display='none';
   document.getElementById('dayBar').style.display='flex';
   document.getElementById('archiveBar').style.display='none';
   document.getElementById('title').textContent=t('appTitle');
-  curKey=defaultKey();load();window.scrollTo(0,0);}
+  setHeader('day');curKey=defaultKey();load();window.scrollTo(0,0);}
 function showArchive(){view='archive';closeMenu();
   if(location.hash!=='#archive')history.replaceState(null,'','#archive');
+  document.getElementById('homeView').style.display='none';setHeader('archive');
   document.getElementById('dayView').style.display='none';
   document.getElementById('archiveView').style.display='';
   document.getElementById('dayBar').style.display='none';
@@ -617,6 +677,7 @@ function showArchive(){view='archive';closeMenu();
   window.scrollTo(0,0);
 }
 function openArchiveDay(k){view='day';document.getElementById('dayView').style.display='';
+  document.getElementById('homeView').style.display='none';setHeader('day');
   document.getElementById('archiveView').style.display='none';
   document.getElementById('dayBar').style.display='flex';
   document.getElementById('archiveBar').style.display='none';
@@ -1505,7 +1566,24 @@ function renderDear(){
 function dearShareMsg(){location.href='https://wa.me/?text='+encodeURIComponent(dearScript());}
 function dearToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+'🗣️ DEAR MAN — '+pretty(curKey)+'\n'+dearScript();save();render();toast(t('addedNotes'));closeDear();}
 
-curKey=defaultKey();load();applyLang();gate();
+/* ===================== Guided tools hub ===================== */
+const TOOLS=[
+  ['🧭','#6366f1','openCTF()','Check the Facts','مراجعة الحقائق','Does the emotion fit the facts?','هل الشعور مناسب للحقايق؟'],
+  ['🌳','#34d399','raOpen()','Radical Acceptance','القبول الجذري','Accept what you can’t change','اقبل اللي مش قادر تغيّره'],
+  ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس وتأريض'],
+  ['🤝','#f472b6','openAsk()','Ask / Say No','أطلب / أرفض','How firmly to ask or refuse','تطلب أو ترفض بقوة قد إيه'],
+  ['🗣️','#a855f7','openDear()','DEAR MAN script','رسالة DEAR MAN','Build what to actually say','اكتب اللي هتقوله فعلًا'],
+  ['🧠','#f59e0b','openMyths()','Myths about emotions','خرافات عن المشاعر','Challenge unhelpful beliefs','اتحدّى المعتقدات المؤذية'],
+];
+function openTools(){document.getElementById('tools').classList.add('show');renderTools();}
+function closeTools(){document.getElementById('tools').classList.remove('show');}
+function renderTools(){
+  document.getElementById('toolsTitle').textContent=L('Guided tools','الأدوات الموجّهة');
+  document.getElementById('toolsBody').innerHTML=TOOLS.map(x=>card(x[0],x[1],'closeTools();'+x[2],L(x[3],x[4]),L(x[5],x[6]))).join('');
+  document.getElementById('toolsNav').innerHTML=`<div class="navin"><button class="next" onclick="closeTools()">${L('Close','إغلاق')}</button></div>`;
+}
+
+curKey=defaultKey();load();view='home';applyLang();gate();
 if(location.hash==='#archive')showArchive();
 </script>
 </body>
