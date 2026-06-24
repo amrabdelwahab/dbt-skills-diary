@@ -640,7 +640,7 @@ function renderHome(){
     +card('🆘','#ef4444','openHelp()',L('I need help','محتاج مساعدة'),L('Answer a few questions → find the right skill','جاوب كام سؤال ← لاقي المهارة المناسبة'))
     +card('📓','#6366f1','showDay()',L('Daily diary','المذكرة اليومية'),L('Check off today’s skills & send to your therapist','علّم مهارات اليوم وابعتها للمعالج'))
     +card('📖','#a855f7','openLearn()',L('Learn the skills','اتعلّم المهارات'),L('Read about every DBT skill','اقرأ عن كل مهارة'))
-    +card('🧘','#0ea5e9','openMindPicker()',L('Practice mindfulness','تمارين اليقظة'),L('Guided breathing & grounding','تمارين تنفّس وتأريض موجّهة'))
+    +card('🧘','#0ea5e9','openMindPicker()',L('Practice mindfulness','تمارين اليقظة'),L('Guided breathing & grounding','تمارين تنفّس و Grounding موجّهة'))
     +card('🧰','#22c55e','openTools()',L('Guided tools','الأدوات الموجّهة'),L('Check the Facts, DEAR MAN, and more','مراجعة الحقائق، DEAR MAN، وأكتر'))
     +`<div class="homerow">`
       +`<button class="homemini" onclick="openRem()">⏰ <span>${L('Reminder','تذكير')}</span></button>`
@@ -1582,7 +1582,7 @@ const TOOLS=[
   ['🆘','#ef4444','openHelp()','I need help','محتاج مساعدة','Find the right skill now','لاقي المهارة المناسبة دلوقتي'],
   ['🧭','#6366f1','openCTF()','Check the Facts','مراجعة الحقائق','Does the emotion fit the facts?','هل الشعور مناسب للحقايق؟'],
   ['🌳','#34d399','raOpen()','Radical Acceptance','القبول الجذري','Accept what you can’t change','اقبل اللي مش قادر تغيّره'],
-  ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس وتأريض'],
+  ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس و Grounding'],
   ['🤝','#f472b6','openAsk()','Ask / Say No','أطلب / أرفض','How firmly to ask or refuse','تطلب أو ترفض بقوة قد إيه'],
   ['🗣️','#a855f7','openDear()','DEAR MAN script','رسالة DEAR MAN','Build what to actually say','اكتب اللي هتقوله فعلًا'],
   ['🧠','#f59e0b','openMyths()','Myths about emotions','خرافات عن المشاعر','Challenge unhelpful beliefs','اتحدّى المعتقدات المؤذية'],
@@ -1615,8 +1615,8 @@ const HELP_RES={
     ['💗','GIVE — keep the relationship','GIVE — حافظ على العلاقة','Read how','اقرأ إزاي','openLearnAt(1,4)'],
     ['🛡️','FAST — keep self-respect','FAST — حافظ على احترامك','Read how','اقرأ إزاي','openLearnAt(1,5)'],
   ]},
-  mindful:{title:['Come back to the present','ارجع للحظة'],intro:['Ground yourself and steady your attention:','اتأرّض وثبّت انتباهك:'],items:[
-    ['🖐️','Grounding 5-4-3-2-1','تمرين الحواس ٥-٤-٣-٢-١','Anchor with your senses','اربط نفسك بحواسك',"openMindId('senses')"],
+  mindful:{title:['Come back to the present','ارجع للحظة'],intro:['Ground yourself and steady your attention:','ارجع للحظة وثبّت انتباهك:'],items:[
+    ['🖐️','Grounding 5-4-3-2-1','Grounding 5-4-3-2-1','Anchor with your senses','اربط نفسك بحواسك',"openMindId('senses')"],
     ['🫁','Observe your breath','لاحظ نفسك','Settle the mind','هدّي العقل',"openMindId('breath')"],
     ['☯️','Wise Mind','العقل الحكيم','Find your center','الاقي مركزك',"openMindId('wise')"],
     ['🧘','All practices','كل التمارين','Open the picker','افتح القائمة','openMindPicker()'],
