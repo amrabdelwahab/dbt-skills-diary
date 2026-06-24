@@ -398,9 +398,9 @@
   <div class="nav" id="toolsNav"></div>
 </div>
 
-<!-- Chain analysis -->
+<!-- Chain reaction -->
 <div class="ctf" id="chain">
-  <div class="top"><button class="x" onclick="closeChain()">✕</button><h2 id="chainTitle">Chain analysis</h2></div>
+  <div class="top"><button class="x" onclick="closeChain()">✕</button><h2 id="chainTitle">Chain reaction</h2></div>
   <div class="prog"><i id="chainProg"></i></div>
   <div class="body" id="chainBody"></div>
   <div class="nav" id="chainNav"></div>
@@ -1638,7 +1638,7 @@ const TOOLS=[
   ['🆘','#ef4444','openHelp()','I need help','محتاج مساعدة','Find the right skill now','لاقي المهارة المناسبة دلوقتي'],
   ['🧭','#6366f1','openCTF()','Work through an emotion','اشتغل على شعورك','Map it · check facts · pick a skill','افهمه · راجع الحقائق · اختار مهارة'],
   ['🔄','#22c55e','openOppo()','Opposite Action','فعل العكس','Change an emotion that doesn’t fit','غيّر شعور مش مناسب'],
-  ['🔗','#38bdf8','openChain()','Chain analysis','تحليل السلسلة','Understand what led to it','افهم اللي أدّى له'],
+  ['🔗','#38bdf8','openChain()','Chain reaction','سلسلة الأحداث','Understand what led to it','افهم اللي أدّى له'],
   ['🌳','#34d399','raOpen()','Radical Acceptance','القبول الجذري','Accept what you can’t change','اقبل اللي مش قادر تغيّره'],
   ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس و Grounding'],
   ['🤝','#f472b6','openAsk()','Ask / Say No','أطلب / أرفض','How firmly to ask or refuse','تطلب أو ترفض بقوة قد إيه'],
@@ -1664,7 +1664,7 @@ const HELP_RES={
   ]},
   emotion:{title:['Work with the emotion','اشتغل على الشعور'],intro:['Check if it fits the facts, then choose:','شوف هل مناسب للحقايق، وبعدين اختار:'],items:[
     ['🧭','Work through an emotion','اشتغل على شعورك','Map it & check the facts','افهمه وراجع الحقائق','openCTF()'],
-    ['🔗','Chain analysis','تحليل السلسلة','Understand what led to it','افهم اللي أدّى له','openChain()'],
+    ['🔗','Chain reaction','سلسلة الأحداث','Understand what led to it','افهم اللي أدّى له','openChain()'],
     ['🧩','Problem Solving','حل المشكلة','If the facts are the problem','لو الحقايق هي المشكلة','openLearnAt(2,3)'],
   ]},
   people:{title:['Handle the interaction','اتعامل مع الموقف'],intro:['Decide your goal, then how to say it:','حدّد هدفك، وبعدين إزاي تقوله:'],items:[
@@ -1712,7 +1712,7 @@ function renderTools(){
   document.getElementById('toolsNav').innerHTML=`<div class="navin"><button class="next" onclick="closeTools()">${L('Close','إغلاق')}</button></div>`;
 }
 
-/* ===================== Chain analysis ===================== */
+/* ===================== Chain reaction ===================== */
 const CHAIN_ORDER=['intro','behavior','prompt','vuln','links','conseq','skills','repair','summary'];
 let chain={};
 function openChain(){chain={i:0};document.getElementById('chain').classList.add('show');renderChain();}
@@ -1722,10 +1722,10 @@ function chainPrev(){if(chain.i>0){chain.i--;renderChain();document.getElementBy
 function renderChain(){
   const id=CHAIN_ORDER[chain.i],b=document.getElementById('chainBody');
   document.getElementById('chainProg').style.width=(chain.i/(CHAIN_ORDER.length-1)*100)+'%';
-  document.getElementById('chainTitle').textContent=L('Chain analysis','تحليل السلسلة');
+  document.getElementById('chainTitle').textContent=L('Chain reaction','سلسلة الأحداث');
   const navMid=`<div class="navin"><button class="back" onclick="chainPrev()">${L('Back','رجوع')}</button><button class="next" onclick="chainNext()">${L('Next','التالي')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
   if(id==='intro'){
-    b.innerHTML=`<p class="step-q">🔗 ${L('Chain analysis','تحليل السلسلة')}</p><p class="step-h">${L('Understand what led to a strong emotion or a behaviour you want to change — link by link — so you can spot where a skill breaks the chain next time.','افهم اللي أدّى لشعور قوي أو سلوك عايز تغيّره — حلقة حلقة — عشان تعرف فين ممكن مهارة تكسر السلسلة المرة الجاية.')}</p>`;
+    b.innerHTML=`<p class="step-q">🔗 ${L('Chain reaction','سلسلة الأحداث')}</p><p class="step-h">${L('Understand what led to a strong emotion or a behaviour you want to change — link by link — so you can spot where a skill breaks the chain next time.','افهم اللي أدّى لشعور قوي أو سلوك عايز تغيّره — حلقة حلقة — عشان تعرف فين ممكن مهارة تكسر السلسلة المرة الجاية.')}</p>`;
     document.getElementById('chainNav').innerHTML=`<div class="navin"><button class="next" onclick="chainNext()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button></div>`;return;
   }
   if(id==='summary'){
@@ -1747,7 +1747,7 @@ function renderChain(){
   b.innerHTML=`<p class="step-q">${S[0]}</p><p class="step-h">${S[1]}</p><textarea oninput="chain.${id}=this.value">${esc(chain[id])}</textarea>`;
   document.getElementById('chainNav').innerHTML=navMid;
 }
-function chainSummary(){const O=['🔗 '+L('Chain analysis','تحليل السلسلة')+' — '+pretty(curKey)];
+function chainSummary(){const O=['🔗 '+L('Chain reaction','سلسلة الأحداث')+' — '+pretty(curKey)];
   const add=(lab,v)=>{if(v&&v.trim())O.push('\n'+lab+': '+v.trim());};
   add(L('What happened','اللي حصل'),chain.behavior);add(L('Prompting event','الحدث المحفّز'),chain.prompt);
   add(L('Vulnerability','القابلية'),chain.vuln);add(L('Links','الحلقات'),chain.links);
