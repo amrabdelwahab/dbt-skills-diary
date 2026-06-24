@@ -149,6 +149,17 @@
     color:#fff;border:0;border-radius:14px;padding:16px;font-size:16px;font-weight:700}
   .sumbox{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;
     white-space:pre-wrap;font-size:14px;line-height:1.5}
+  .emchain{position:relative;margin:16px 0 6px;padding-inline-start:24px}
+  .emchain::before{content:'';position:absolute;inset-inline-start:7px;top:8px;bottom:8px;width:2px;background:var(--line)}
+  .emrow{position:relative;padding:7px 0}
+  .emrow::before{content:'';position:absolute;inset-inline-start:-23px;top:9px;width:14px;height:14px;border-radius:50%;background:var(--e);border:2px solid var(--bg)}
+  .emrow b{font-size:14px}.emrow small{display:block;color:var(--muted);font-size:12px}
+  .gauge{height:12px;border-radius:8px;background:linear-gradient(90deg,#22c55e,#fbbf24,#ef4444);position:relative;margin:14px 6px 20px}
+  .gauge .mk{position:absolute;top:50%;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--bg);transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--line)}
+  .flowopt{display:block;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;margin:8px 0;color:var(--ink)}
+  .flowopt.on{border-color:var(--accent);background:var(--card2)}
+  .flowopt b{font-size:15px}.flowopt span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .flowopt.on span{color:#a5b4fc}
   .installbar{display:none;align-items:center;gap:10px;max-width:640px;margin:10px auto 0;
     background:linear-gradient(90deg,#6366f1,#8b5cf6);color:#fff;border-radius:14px;padding:12px 14px}
   .installbar.show{display:flex}
@@ -385,6 +396,22 @@
   </div>
   <div class="body" id="toolsBody"></div>
   <div class="nav" id="toolsNav"></div>
+</div>
+
+<!-- Chain analysis -->
+<div class="ctf" id="chain">
+  <div class="top"><button class="x" onclick="closeChain()">✕</button><h2 id="chainTitle">Chain analysis</h2></div>
+  <div class="prog"><i id="chainProg"></i></div>
+  <div class="body" id="chainBody"></div>
+  <div class="nav" id="chainNav"></div>
+</div>
+
+<!-- Opposite Action -->
+<div class="ctf" id="oppo">
+  <div class="top"><button class="x" onclick="closeOppo()">✕</button><h2 id="oppoTitle">Opposite Action</h2></div>
+  <div class="prog"><i id="oppoProg"></i></div>
+  <div class="body" id="oppoBody"></div>
+  <div class="nav" id="oppoNav"></div>
 </div>
 
 <!-- Mindfulness practice -->
@@ -757,7 +784,7 @@ let tT;function toast(m){const t=document.getElementById('toast');t.textContent=
 const PRIMARY=[['Fear','الخوف'],['Sadness','الحزن'],['Shame','الخزي'],['Guilt','الذنب'],['Happiness','السعادة'],['Disgust','القرف / الاشمئزاز'],['Anger','الغضب']];
 const BODY=[['Tight chest','صدر مضغوط'],['Racing heart','قلب بيدق بسرعة'],['Hot / flushed','سخونة / احمرار'],['Tense muscles','عضلات مشدودة'],['Shaky','رعشة'],['Stomach knot','معدة مقبوضة'],['Heavy','تقل'],['Short of breath','ضيق نفس'],['Restless','مش مستقر'],['Numb','تنميل / خدر']];
 const URGES=[['Withdraw / hide','انسحب / اختفي'],['Lash out','أهجم'],['Run / escape','أجري / أهرب'],['Cry','عياط'],['Shut down','أنغلق'],['Avoid it','أتجنّب'],['Seek reassurance','أدوّر على طمأنة'],['Apologize','أعتذر'],['Check / control','أتحكّم / أراقب'],['Numb out','أخدّر نفسي']];
-const ORDER=['intro','emotion','intensity','event','interp','body','urges','threat','catastrophe','fit','summary'];
+const ORDER=['intro','emotion','intensity','vuln','event','interp','body','urges','after','threat','catastrophe','fit','summary'];
 let ctf={};
 
 function openCTF(){ctf={step:'intro',bodyChips:[],urgeChips:[]};document.getElementById('ctf').classList.add('show');renderCTF();}
@@ -770,14 +797,14 @@ function ctfNext(){
   const s=ctf.step;
   if(s==='emotion'&&!ctf.emotion){return toast(L('Pick an emotion first','اختار شعور الأول'));}
   if(s==='intensity'&&ctf.intensity==null&&!ctf.cantTell){return toast(L('Tap a number, or “Can’t tell”','دوس رقم، أو «مش قادر أحدد»'));}
-  if(s==='intensity'){if(triggered()){ctf.dtFrom='intensity';return gotoStep('dt');}return gotoStep('event');}
-  if(s==='dt'){return gotoStep('event');}
+  if(s==='intensity'){if(triggered()){ctf.dtFrom='intensity';return gotoStep('dt');}return gotoStep('vuln');}
+  if(s==='dt'){return gotoStep('vuln');}
   const i=ORDER.indexOf(s); if(i>=0&&i<ORDER.length-1)gotoStep(ORDER[i+1]);
 }
 function ctfPrev(){
   const s=ctf.step;
   if(s==='dt')return gotoStep(ctf.dtFrom||'intensity');
-  if(s==='event')return gotoStep((triggered()||ctf.cantName)?'dt':'intensity');
+  if(s==='vuln')return gotoStep((triggered()||ctf.cantName)?'dt':'intensity');
   const i=ORDER.indexOf(s); if(i>0)gotoStep(ORDER[i-1]); else closeCTF();
 }
 function ctfEmo(n){ctf.emotion=n;ctf.cantName=false;renderCTF();}
@@ -799,14 +826,18 @@ function renderCTF(){
   const b=document.getElementById('ctfBody'); const s=ctf.step;
   const idx=Math.max(0,ORDER.indexOf(s==='dt'?'intensity':s));
   document.getElementById('ctfProg').style.width=(idx/(ORDER.length-1)*100)+'%';
-  const CHECK=['threat','catastrophe','fit'];
-  document.getElementById('ctfTitle').textContent =
-    (s==='intro'||s==='summary')?L('Describe + Check the Facts','اوصف + راجع الحقائق')
-    :CHECK.includes(s)?L('Check the Facts','مراجعة الحقائق'):L('Describe the Emotion','وصف المشاعر');
+  document.getElementById('ctfTitle').textContent=L('Work through an emotion','اشتغل على شعورك');
   let h='';
   if(s==='intro'){
-    h=`<p class="step-q">${L('Describe the emotion, then check the facts.','اوصف المشاعر، وبعدين راجع الحقائق.')}</p>
-    <p class="step-h">${L('Two DBT skills in one (Linehan). First you <b>describe the emotion</b> — what set it off, the body sensations, the urges. Then you <b>check the facts</b> — does the emotion, and how strong it is, actually fit the situation, or fit your <i>interpretation</i> of it? A few minutes. Nothing is sent anywhere unless you choose to at the end.','مهارتين DBT في واحدة. الأول <b>توصف المشاعر</b> — إيه اللي حصل، أحاسيس الجسم، الرغبات. وبعدين <b>تراجع الحقائق</b> — هل الشعور، وقد إيه هو قوي، فعلاً مناسب للموقف، ولا مناسب لـ<i>تفسيرك</i> ليه؟ دقايق قليلة. مفيش حاجة بتتبعت لحد إلا لو اخترت في الآخر.')}</p>`;
+    h=`<p class="step-q">${L('Work through an emotion','اشتغل على شعورك')}</p>
+    <p class="step-h">${L('We’ll map the emotion (Linehan’s model), check whether it fits the facts, then pick the skill that fits. A few minutes — nothing is sent unless you choose to.','هنرسم الشعور (نموذج لينيهان)، ونشوف هل مناسب للحقائق، وبعدين نختار المهارة المناسبة. دقايق قليلة — مفيش حاجة بتتبعت إلا لو اخترت.')}</p>
+    <div class="emchain">
+      <div class="emrow"><b>${L('Vulnerability','القابلية')}</b><small>${L('what makes you prone','اللي بيخليك قابل')}</small></div>
+      <div class="emrow"><b>${L('Prompting event','الحدث المحفّز')}</b><small>${L('the trigger','المحفّز')}</small></div>
+      <div class="emrow"><b>${L('Interpretation','التفسير')}</b><small>${L('the story you tell','الحكاية اللي بتقولها')}</small></div>
+      <div class="emrow"><b>${L('Emotion · body · urge','الشعور · الجسم · الرغبة')}</b><small>${L('what you feel & want to do','اللي بتحسه وعايز تعمله')}</small></div>
+      <div class="emrow"><b>${L('Action · aftereffects','الفعل · التأثير بعدها')}</b><small>${L('what you did & what followed','اللي عملته واللي حصل بعدها')}</small></div>
+    </div>`;
     setNav(`<button class="next" onclick="ctfNext()">${L('Start ▸','ابدأ ◂')}</button>`);
   }
   else if(s==='emotion'){
@@ -821,9 +852,16 @@ function renderCTF(){
   else if(s==='intensity'){
     h=`<p class="step-q">${L('How intense is it, 0–10?','قد إيه شدته، من ٠ لـ ١٠؟')}</p>
     <p class="step-h">${L('0 = not at all · 10 = the most you’ve ever felt it.','٠ = ولا حاجة · ١٠ = أقوى ما حسيت بيه في حياتك.')}</p>
+    <div class="gauge" dir="ltr">${ctf.intensity!=null?`<div class="mk" style="left:${ctf.intensity/10*100}%"></div>`:''}</div>
     <div class="iscale">`+Array.from({length:11},(_,n)=>
       `<button class="${n>=8?'hi':'lo'} ${ctf.intensity===n?'on':''}" onclick="ctfInt(${n})">${n}</button>`).join('')+`</div>
     <button class="canttell ${ctf.cantTell?'on':''}" onclick="ctfCant()">${L('I can’t tell how intense it is','مش قادر أحدد شدته')}</button>`;
+    nav();
+  }
+  else if(s==='vuln'){
+    h=`<p class="step-q">${L('What made you more vulnerable?','إيه اللي خلاك أكتر قابلية؟')}</p>
+    <p class="step-h">${L('Things that lowered your resilience that day — tired, hungry, sick, stressed, or earlier events.','حاجات قلّلت مناعتك في اليوم ده — تعب، جوع، مرض، توتر، أو أحداث قبلها.')}</p>
+    <textarea placeholder="${L('e.g. slept badly, skipped meals, a rough morning…','مثلاً: نمت وحش، فوّت وجبات، صباح متعب…')}" oninput="ctf.vuln=this.value">${ctf.vuln||''}</textarea>`;
     nav();
   }
   else if(s==='dt'){
@@ -864,6 +902,12 @@ function renderCTF(){
     <textarea placeholder="${L('What you feel pulled to do or say…','اللي حاسس إنك متدفع تعمله أو تقوله…')}" oninput="ctf.urgeText=this.value">${ctf.urgeText||''}</textarea>`;
     nav();
   }
+  else if(s==='after'){
+    h=`<p class="step-q">${L('What did you do — and what followed?','عملت إيه — وحصل إيه بعدها؟')}</p>
+    <p class="step-h">${L('How you acted on (or resisted) the urge, and the aftereffects — short and long term, for you and others.','إزاي تصرفت على (أو قاومت) الرغبة، والتأثير بعدها — على القصير والطويل، ليك وللناس.')}</p>
+    <textarea placeholder="${L('What I did, and what happened after…','اللي عملته، واللي حصل بعدها…')}" oninput="ctf.after=this.value">${ctf.after||''}</textarea>`;
+    nav();
+  }
   else if(s==='threat'){
     h=`<p class="step-q">${L('Are you assuming a threat?','هل بتفترض وجود تهديد؟')}</p>
     <p class="step-h">${L('Name the threat you’re sensing, then weigh it honestly.','سمّي التهديد اللي حاسّه، وبعدين وزنه بصدق.')}</p>
@@ -883,12 +927,20 @@ function renderCTF(){
     nav();
   }
   else if(s==='fit'){
-    const opt=(v,t,d)=>`<button class="fitbtn ${ctf.fit===v?'on':''}" onclick="ctfFit('${v}')">${t}<small>${d}</small></button>`;
+    const opt=(v,t,d)=>`<button class="flowopt ${ctf.fit===v?'on':''}" onclick="ctfFit('${v}')"><b>${t}</b><span>${d}</span></button>`;
+    const rec={
+      fits:[L('Continue: Problem Solving','كمّل: حل المشكلة'),'closeCTF();openLearnAt(2,3)'],
+      partly:[L('Continue: Opposite Action','كمّل: فعل العكس'),'closeCTF();openOppo()'],
+      doesnt:[L('Continue: Opposite Action','كمّل: فعل العكس'),'closeCTF();openOppo()'],
+      accept:[L('Continue: Radical Acceptance','كمّل: القبول الجذري'),'closeCTF();raOpen()'],
+    }[ctf.fit];
     h=`<p class="step-q">${L('Does the emotion — and its intensity — fit the facts?','هل المشاعر — وشدتها — مناسبة للحقائق؟')}</p>
-    <p class="step-h">${L('Looking at everything above, decide honestly.','بصّ لكل اللي فوق، وقرر بصدق.')}</p>
-    ${opt('fits',L('✅ It fits the facts','✅ مناسبة للحقائق'),L('The emotion makes sense and so does its strength → problem-solve / act on it skilfully.','الشعور منطقي وشدته كمان → حل المشكلة / اتصرف بمهارة.'))}
-    ${opt('partly',L('🟡 The emotion fits, but the intensity doesn’t','🟡 الشعور مناسب لكن الشدة لأ'),L('Real concern, but turned up too high → check the facts, then act opposite to the extra intensity.','قلق حقيقي بس متعلّي أوي → راجع الحقايق، وبعدين اعمل العكس للشدة الزيادة.'))}
-    ${opt('doesnt',L('❌ It doesn’t fit the facts','❌ مش مناسبة للحقائق'),L('It’s driven by the interpretation, not the facts → try acting opposite to the urge.','ناتج عن التفسير مش الحقايق → جرّب تعمل عكس الرغبة الملحة.'))}`;
+    <p class="step-h">${L('Pick what’s true — it points you to the skill that fits.','اختار اللي صح — هيوجّهك للمهارة المناسبة.')}</p>
+    ${opt('fits',L('✅ Fits the facts','✅ مناسبة للحقائق'),L('→ Problem solving / act on it','حل المشكلة / اتصرف عليها'))}
+    ${opt('partly',L('🟡 Fits, but too intense','🟡 مناسبة لكن متعلّية أوي'),L('→ Opposite action (to the intensity)','فعل العكس (للشدة)'))}
+    ${opt('doesnt',L('❌ Doesn’t fit the facts','❌ مش مناسبة للحقائق'),L('→ Opposite action','فعل العكس'))}
+    ${opt('accept',L('🪨 Real, but I can’t change it','🪨 حقيقية، بس مش قادر أغيّرها'),L('→ Radical acceptance','القبول الجذري'))}
+    ${rec?`<button class="ctfopen" style="background:var(--accent)" onclick="${rec[1]}">${rec[0]} ${LANG==='ar'?'◂':'▸'}</button>`:''}`;
     nav();
   }
   else if(s==='summary'){
@@ -906,11 +958,12 @@ function renderCTF(){
 
 function ctfSummary(){
   const sep=LANG==='ar'?'، ':', ';
-  const O=[]; O.push(L('🧭 Check the Facts — ','🧭 مراجعة الحقائق — ')+pretty(curKey));
+  const O=[]; O.push(L('🧭 Work through an emotion — ','🧭 اشتغل على شعورك — ')+pretty(curKey));
   const emoP=PRIMARY.find(p=>p[0]===ctf.emotion);
   let e=ctf.cantName?L('couldn’t name it','مش متسمّي'):(emoP?L(emoP[0],emoP[1]):(ctf.emotion||'—')); if(ctf.emotionWord)e+=' ('+ctf.emotionWord+')';
   O.push(L('Emotion: ','الشعور: ')+e+'  ·  '+L('Intensity: ','الشدة: ')+(ctf.cantTell?L('hard to tell','صعب التحديد'):(ctf.intensity!=null?ctf.intensity+'/10':'—')));
   const add=(lab,v)=>{if(v&&String(v).trim())O.push('\n'+lab+': '+String(v).trim());};
+  add(L('Vulnerability','القابلية'),ctf.vuln);
   add(L('What happened (just the facts)','اللي حصل (الحقايق بس)'),ctf.event);
   add(L('My interpretation','تفسيري'),ctf.interp);
   add(L('Other interpretations','تفسيرات تانية'),ctf.otherInterp);
@@ -918,11 +971,12 @@ function ctfSummary(){
   add(L('Body sensations','أحاسيس الجسم'),body);
   const urge=[...(ctf.urgeChips||[]).map(x=>locItem(URGES,x)),ctf.urgeText].filter(x=>x&&String(x).trim()).join(sep);
   add(L('Action urges','الرغبات الملحة'),urge);
+  add(L('What I did / after','اللي عملته / بعدها'),ctf.after);
   if((ctf.threat||'').trim()){let th=ctf.threat.trim();if(ctf.threatProb)th+='  ('+L('likelihood: ','الاحتمال: ')+ctf.threatProb+')';O.push('\n'+L('Threat I’m assuming: ','التهديد اللي بفترضه: ')+th);}
   add(L('Other possible outcomes','نهايات تانية ممكنة'),ctf.otherOutcomes);
   add(L('Worst case','أسوأ احتمال'),ctf.catastrophe);
   add(L('How I could cope','ازاي أقدر أتعامل'),ctf.coping);
-  const fitTxt={fits:L('The emotion fits the facts.','المشاعر مناسبة للحقائق.'),partly:L('The emotion fits, but its intensity doesn’t.','المشاعر مناسبة لكن شدتها لأ.'),doesnt:L('The emotion does NOT fit the facts.','المشاعر مش مناسبة للحقائق.')}[ctf.fit];
+  const fitTxt={fits:L('Fits the facts → problem-solve / act on it.','مناسبة للحقائق → حل المشكلة / اتصرف عليها.'),partly:L('Fits, but too intense → opposite action to the intensity.','مناسبة لكن متعلّية → فعل العكس للشدة.'),doesnt:L('Doesn’t fit the facts → opposite action.','مش مناسبة للحقائق → فعل العكس.'),accept:L('Real but can’t change it → radical acceptance.','حقيقية بس مش قابلة للتغيير → القبول الجذري.')}[ctf.fit];
   if(fitTxt)O.push('\n'+L('Conclusion: ','الخلاصة: ')+fitTxt);
   return O.join('\n');
 }
@@ -1364,6 +1418,7 @@ const LAUNCH={
  '1_3':'openDear()',                // MAN → DEAR MAN composer
  '2_0':'openCTF()',                 // Describing emotions → Describe + Check the Facts
  '2_1':'openCTF()',                 // Check the facts → Describe + Check the Facts
+ '2_2':'openOppo()',                // Opposite-to-emotion action → Opposite Action wizard
  '3_4':'raOpen()',                  // Radical Acceptance → guided walkthrough
 };
 // Per-letter acronym breakdowns: [letter, wordEn, wordAr, descEn, descAr]
@@ -1581,7 +1636,9 @@ function dearToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.
 /* ===================== Guided tools hub ===================== */
 const TOOLS=[
   ['🆘','#ef4444','openHelp()','I need help','محتاج مساعدة','Find the right skill now','لاقي المهارة المناسبة دلوقتي'],
-  ['🧭','#6366f1','openCTF()','Check the Facts','مراجعة الحقائق','Does the emotion fit the facts?','هل الشعور مناسب للحقايق؟'],
+  ['🧭','#6366f1','openCTF()','Work through an emotion','اشتغل على شعورك','Map it · check facts · pick a skill','افهمه · راجع الحقائق · اختار مهارة'],
+  ['🔄','#22c55e','openOppo()','Opposite Action','فعل العكس','Change an emotion that doesn’t fit','غيّر شعور مش مناسب'],
+  ['🔗','#38bdf8','openChain()','Chain analysis','تحليل السلسلة','Understand what led to it','افهم اللي أدّى له'],
   ['🌳','#34d399','raOpen()','Radical Acceptance','القبول الجذري','Accept what you can’t change','اقبل اللي مش قادر تغيّره'],
   ['🧘','#0ea5e9','openMindPicker()','Mindfulness practice','تمارين اليقظة','Breathing & grounding','تمارين تنفّس و Grounding'],
   ['🤝','#f472b6','openAsk()','Ask / Say No','أطلب / أرفض','How firmly to ask or refuse','تطلب أو ترفض بقوة قد إيه'],
@@ -1606,8 +1663,8 @@ const HELP_RES={
     ['🎧','Distract / self-soothe','تشتيت / تهدئة الذات','Get through safely','عدّي بأمان','openLearnAt(3,3)'],
   ]},
   emotion:{title:['Work with the emotion','اشتغل على الشعور'],intro:['Check if it fits the facts, then choose:','شوف هل مناسب للحقايق، وبعدين اختار:'],items:[
-    ['🧭','Check the Facts','مراجعة الحقائق','Does it fit the situation?','هل مناسب للموقف؟','openCTF()'],
-    ['🔄','Opposite Action','فعل العكس','If it doesn’t fit / doesn’t help','لو مش مناسب / مش مفيد','openLearnAt(2,2)'],
+    ['🧭','Work through an emotion','اشتغل على شعورك','Map it & check the facts','افهمه وراجع الحقائق','openCTF()'],
+    ['🔗','Chain analysis','تحليل السلسلة','Understand what led to it','افهم اللي أدّى له','openChain()'],
     ['🧩','Problem Solving','حل المشكلة','If the facts are the problem','لو الحقايق هي المشكلة','openLearnAt(2,3)'],
   ]},
   people:{title:['Handle the interaction','اتعامل مع الموقف'],intro:['Decide your goal, then how to say it:','حدّد هدفك، وبعدين إزاي تقوله:'],items:[
@@ -1654,6 +1711,94 @@ function renderTools(){
   document.getElementById('toolsBody').innerHTML=TOOLS.map(x=>card(x[0],x[1],'closeTools();'+x[2],L(x[3],x[4]),L(x[5],x[6]))).join('');
   document.getElementById('toolsNav').innerHTML=`<div class="navin"><button class="next" onclick="closeTools()">${L('Close','إغلاق')}</button></div>`;
 }
+
+/* ===================== Chain analysis ===================== */
+const CHAIN_ORDER=['intro','behavior','prompt','vuln','links','conseq','skills','repair','summary'];
+let chain={};
+function openChain(){chain={i:0};document.getElementById('chain').classList.add('show');renderChain();}
+function closeChain(){document.getElementById('chain').classList.remove('show');render();}
+function chainNext(){if(chain.i<CHAIN_ORDER.length-1){chain.i++;renderChain();document.getElementById('chainBody').scrollTop=0;}}
+function chainPrev(){if(chain.i>0){chain.i--;renderChain();document.getElementById('chainBody').scrollTop=0;}else closeChain();}
+function renderChain(){
+  const id=CHAIN_ORDER[chain.i],b=document.getElementById('chainBody');
+  document.getElementById('chainProg').style.width=(chain.i/(CHAIN_ORDER.length-1)*100)+'%';
+  document.getElementById('chainTitle').textContent=L('Chain analysis','تحليل السلسلة');
+  const navMid=`<div class="navin"><button class="back" onclick="chainPrev()">${L('Back','رجوع')}</button><button class="next" onclick="chainNext()">${L('Next','التالي')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
+  if(id==='intro'){
+    b.innerHTML=`<p class="step-q">🔗 ${L('Chain analysis','تحليل السلسلة')}</p><p class="step-h">${L('Understand what led to a strong emotion or a behaviour you want to change — link by link — so you can spot where a skill breaks the chain next time.','افهم اللي أدّى لشعور قوي أو سلوك عايز تغيّره — حلقة حلقة — عشان تعرف فين ممكن مهارة تكسر السلسلة المرة الجاية.')}</p>`;
+    document.getElementById('chainNav').innerHTML=`<div class="navin"><button class="next" onclick="chainNext()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button></div>`;return;
+  }
+  if(id==='summary'){
+    b.innerHTML=`<p class="step-q">${L('Your chain','سلسلتك')}</p><div class="sumbox">${esc(chainSummary())}</div>
+      <button class="ctfopen" style="background:var(--accent2)" onclick="chainToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+      <button class="canttell" onclick="chainShare()">${L('📲 Send to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>
+      <button class="canttell" onclick="navigator.clipboard.writeText(chainSummary()).then(()=>toast(t('copied')))">${L('📋 Copy','📋 نسخ')}</button>`;
+    document.getElementById('chainNav').innerHTML=`<div class="navin"><button class="back" onclick="chainPrev()">${L('Back','رجوع')}</button><button class="next" onclick="closeChain()">${L('Done','تمام')}</button></div>`;return;
+  }
+  const S={
+    behavior:[L('What happened?','اللي حصل؟'),L('Describe the problem behaviour or the emotional episode you want to understand.','اوصف السلوك المشكلة أو نوبة الشعور اللي عايز تفهمها.')],
+    prompt:[L('Prompting event','الحدث المحفّز'),L('What set it off? Just the facts — where, when, who, what.','إيه اللي شغّله؟ الحقايق بس — فين، إمتى، مين، إيه.')],
+    vuln:[L('Vulnerability factors','عوامل القابلية'),L('What made you more vulnerable that day? (tired, hungry, sick, stressed, earlier events)','إيه اللي خلاك أكتر قابلية في اليوم ده؟ (تعب، جوع، مرض، توتر، أحداث قبلها)')],
+    links:[L('The chain of links','سلسلة الحلقات'),L('Step by step from trigger to behaviour: thoughts, feelings, body sensations, urges, actions.','خطوة بخطوة من المحفّز للسلوك: أفكار، مشاعر، أحاسيس جسم، رغبات، أفعال.')],
+    conseq:[L('Consequences','النتائج'),L('What followed — short-term and long-term, for you and others.','اللي حصل بعدها — على المدى القصير والبعيد، ليك وللناس.')],
+    skills:[L('Where could a skill break the chain?','فين ممكن مهارة تكسر السلسلة؟'),L('At which link could a skill have helped? Which will you use next time?','عند أنهي حلقة كانت مهارة هتساعد؟ هتستخدم أنهي مهارة المرة الجاية؟')],
+    repair:[L('Repair','الإصلاح'),L('Anything to repair or put right — with yourself or others.','أي حاجة محتاجة إصلاح أو تصحيح — مع نفسك أو مع غيرك.')],
+  }[id];
+  b.innerHTML=`<p class="step-q">${S[0]}</p><p class="step-h">${S[1]}</p><textarea oninput="chain.${id}=this.value">${esc(chain[id])}</textarea>`;
+  document.getElementById('chainNav').innerHTML=navMid;
+}
+function chainSummary(){const O=['🔗 '+L('Chain analysis','تحليل السلسلة')+' — '+pretty(curKey)];
+  const add=(lab,v)=>{if(v&&v.trim())O.push('\n'+lab+': '+v.trim());};
+  add(L('What happened','اللي حصل'),chain.behavior);add(L('Prompting event','الحدث المحفّز'),chain.prompt);
+  add(L('Vulnerability','القابلية'),chain.vuln);add(L('Links','الحلقات'),chain.links);
+  add(L('Consequences','النتائج'),chain.conseq);add(L('Skill to break the chain','مهارة تكسر السلسلة'),chain.skills);
+  add(L('Repair','الإصلاح'),chain.repair);return O.join('\n');}
+function chainToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+chainSummary();save();render();toast(t('addedNotes'));closeChain();}
+function chainShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(chainSummary());}
+
+/* ===================== Opposite Action ===================== */
+const OPPO_ORDER=['intro','emotion','urge','plan','summary'];
+let oppo={};
+function openOppo(){oppo={i:0};document.getElementById('oppo').classList.add('show');renderOppo();}
+function closeOppo(){document.getElementById('oppo').classList.remove('show');render();}
+function oppoNext(){const id=OPPO_ORDER[oppo.i];if(id==='emotion'&&!oppo.emotion)return toast(L('Pick an emotion first','اختار شعور الأول'));if(oppo.i<OPPO_ORDER.length-1){oppo.i++;renderOppo();document.getElementById('oppoBody').scrollTop=0;}}
+function oppoPrev(){if(oppo.i>0){oppo.i--;renderOppo();document.getElementById('oppoBody').scrollTop=0;}else closeOppo();}
+function oppoEmo(n){oppo.emotion=n;renderOppo();}
+function renderOppo(){
+  const id=OPPO_ORDER[oppo.i],b=document.getElementById('oppoBody');
+  document.getElementById('oppoProg').style.width=(oppo.i/(OPPO_ORDER.length-1)*100)+'%';
+  document.getElementById('oppoTitle').textContent=L('Opposite Action','فعل العكس');
+  const navMid=`<div class="navin"><button class="back" onclick="oppoPrev()">${L('Back','رجوع')}</button><button class="next" onclick="oppoNext()">${L('Next','التالي')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
+  if(id==='intro'){
+    b.innerHTML=`<p class="step-q">🔄 ${L('Opposite Action','فعل العكس')}</p><p class="step-h">${L('When an emotion doesn’t fit the facts — or acting on it won’t help — you can change it by acting opposite to its urge, fully. Not sure if it fits? Check the Facts first.','لما الشعور مش مناسب للحقايق — أو التصرف عليه مش هيساعد — تقدر تغيّره بإنك تعمل عكس رغبته، بالكامل. مش متأكد إنه مناسب؟ راجع الحقائق الأول.')}</p>
+      <button class="canttell" onclick="closeOppo();openCTF()">${L('🧭 Check the Facts first','🧭 راجع الحقائق الأول')}</button>`;
+    document.getElementById('oppoNav').innerHTML=`<div class="navin"><button class="next" onclick="oppoNext()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button></div>`;return;
+  }
+  if(id==='emotion'){
+    b.innerHTML=`<p class="step-q">${L('Which emotion?','أنهي شعور؟')}</p><div class="emogrid">`+PRIMARY.map(e=>`<button class="${oppo.emotion===e[0]?'on':''}" onclick="oppoEmo('${e[0]}')">${L(e[0],e[1])}</button>`).join('')+`</div>`;
+    document.getElementById('oppoNav').innerHTML=navMid;return;
+  }
+  if(id==='urge'){
+    b.innerHTML=`<p class="step-q">${L('What’s the urge?','إيه الرغبة؟')}</p><p class="step-h">${L('What is this emotion pushing you to do? (hide, attack, avoid, give up…)','الشعور ده بيدفعك تعمل إيه؟ (تختفي، تهجم، تتجنّب، تستسلم…)')}</p><textarea oninput="oppo.urge=this.value">${esc(oppo.urge)}</textarea>`;
+    document.getElementById('oppoNav').innerHTML=navMid;return;
+  }
+  if(id==='plan'){
+    b.innerHTML=`<p class="step-q">${L('Act opposite — all the way','اعمل العكس — للآخر')}</p><p class="step-h">${L('What’s the opposite of that urge? Then do it fully — posture, face, voice, words, and thoughts — and keep going until the emotion shifts.','إيه عكس الرغبة دي؟ وبعدين اعملها بالكامل — الوقفة، الوش، الصوت، الكلام، والأفكار — وكمّل لغاية ما الشعور يتغير.')}</p><textarea oninput="oppo.opposite=this.value">${esc(oppo.opposite)}</textarea>`;
+    document.getElementById('oppoNav').innerHTML=navMid;return;
+  }
+  state.skills['2_2']=true;save();
+  b.innerHTML=`<p class="step-q">${L('Your opposite-action plan','خطة فعل العكس')}</p><div class="sumbox">${esc(oppoSummary())}</div>
+    <button class="ctfopen" style="background:var(--accent2)" onclick="oppoToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+    <button class="canttell" onclick="oppoShare()">${L('📲 Send to my therapist (WhatsApp)','📲 ابعتها للمعالج (واتساب)')}</button>`;
+  document.getElementById('oppoNav').innerHTML=`<div class="navin"><button class="back" onclick="oppoPrev()">${L('Back','رجوع')}</button><button class="next" onclick="closeOppo()">${L('Done','تمام')}</button></div>`;
+}
+function oppoSummary(){const p=PRIMARY.find(x=>x[0]===oppo.emotion);const O=['🔄 '+L('Opposite Action','فعل العكس')+' — '+pretty(curKey)];
+  if(p)O.push(L('Emotion','الشعور')+': '+L(p[0],p[1]));
+  if((oppo.urge||'').trim())O.push('\n'+L('Urge','الرغبة')+': '+oppo.urge.trim());
+  if((oppo.opposite||'').trim())O.push('\n'+L('Opposite action','الفعل العكسي')+': '+oppo.opposite.trim());
+  return O.join('\n');}
+function oppoToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+oppoSummary();save();render();toast(t('addedNotes'));closeOppo();}
+function oppoShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(oppoSummary());}
 
 curKey=defaultKey();load();view='home';applyLang();gate();
 if(location.hash==='#archive')showArchive();
