@@ -40,8 +40,12 @@
     color:var(--ink);padding:10px;font:inherit;resize:vertical;min-height:64px}
   .group{margin:18px 0 6px;display:flex;align-items:center;gap:8px}
   .dot{width:10px;height:10px;border-radius:50%}
-  .group h3{margin:0;font-size:15px;font-weight:700}
-  .group .count{margin-inline-start:auto;color:var(--muted);font-size:13px}
+  .group h3{margin:0;font-size:15px;font-weight:700;flex:1;min-width:0}
+  .group .count{flex:none;color:var(--muted);font-size:13px}
+  .ghchips{flex:none;display:flex;gap:6px;margin-inline-start:4px}
+  .ghchip{background:var(--card2);border:1px solid var(--line);color:var(--ink);border-radius:16px;
+    padding:5px 9px;font-size:14px;line-height:1;display:inline-flex;align-items:center}
+  .ghchip:active{background:var(--accent);border-color:var(--accent)}
   .skill{display:flex;align-items:center;gap:12px;padding:12px 12px;margin:7px 0;
     background:var(--card);border:1px solid var(--line);border-radius:12px;cursor:pointer;
     transition:background .12s,border-color .12s}
@@ -150,6 +154,16 @@
   .installbar .no{background:#ffffff33;color:#fff;border:0;border-radius:10px;width:34px;height:38px;font-size:16px}
   .practicebtn{display:block;width:100%;margin:4px 0 6px;background:linear-gradient(90deg,#0ea5e9,#6366f1);
     color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700}
+  .toolchips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+  .toolchip{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);
+    color:var(--ink);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:700}
+  .toolchip:active{border-color:var(--accent);background:var(--accent);color:#fff}
+  .srow{display:flex;align-items:stretch;gap:6px;margin:7px 0}
+  .srow .skill{flex:1;margin:0;min-width:0}
+  .srbtn{flex:none;width:42px;border:1px solid var(--line);border-radius:12px;background:var(--card2);
+    color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center}
+  .srbtn.go{color:var(--accent)}
+  .srbtn:active{background:var(--accent);color:#fff;border-color:var(--accent)}
   .modebtn{display:block;width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);
     border-radius:14px;padding:20px;font-size:17px;font-weight:700;margin:10px 0;text-align:start}
   .modebtn .ms{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:4px}
@@ -169,6 +183,12 @@
   .lrow .lt{flex:1;min-width:0}.lrow .lt b{font-size:15px}
   .lrow .lt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
   .lrow .chev{color:var(--muted);font-size:20px;flex:none}
+  .modintro{background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--accent);
+    border-radius:12px;padding:15px;margin:2px 0 14px;font-size:14.5px;line-height:1.65}
+  .lhead{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin:18px 2px 6px}
+  .mindstate{border:1px solid var(--line);border-inline-start:4px solid var(--accent);border-radius:12px;padding:12px 14px;margin:8px 0;background:var(--card)}
+  .mindstate b{display:block;font-size:15px;margin-bottom:3px}
+  .mindstate span{font-size:14px;color:var(--muted);line-height:1.5}
   .infosec{margin:16px 0}
   .infosec .ih{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
   .infosec p{margin:0;font-size:16px;line-height:1.55}
@@ -288,7 +308,7 @@
 <!-- Learn the skills -->
 <div class="ctf" id="learn">
   <div class="top">
-    <button class="x" onclick="closeLearn()">✕</button>
+    <button class="x" id="learnBack" dir="ltr" onclick="history.back()" aria-label="Back">‹</button>
     <h2 id="learnTitle">Learn</h2>
   </div>
   <div class="body" id="learnBody"></div>
@@ -304,6 +324,17 @@
   <div class="prog"><i id="mythProg"></i></div>
   <div class="body" id="mythBody"></div>
   <div class="nav" id="mythNav"></div>
+</div>
+
+<!-- DEAR MAN script composer -->
+<div class="ctf" id="dear">
+  <div class="top">
+    <button class="x" onclick="closeDear()">✕</button>
+    <h2 id="dearTitle">DEAR MAN</h2>
+  </div>
+  <div class="prog"><i id="dearProg"></i></div>
+  <div class="body" id="dearBody"></div>
+  <div class="nav" id="dearNav"></div>
 </div>
 
 <!-- Ask / Say No intensity -->
@@ -535,19 +566,15 @@ function render(){
   let html='';
   GROUPS.forEach((g,gi)=>{
     const done=g.skills.filter((_,si)=>state.skills[gi+'_'+si]).length;
-    html+=`<div class="group"><span class="dot" style="background:${g.color}"></span>
-      <h3>${grName(g)}</h3><span class="count">${done}/${g.skills.length}</span></div>`;
-    if(gi===0)html+=`<button class="practicebtn" onclick="openMindPicker()">${L('🧘 Practice mindfulness','🧘 تمارين اليقظة')}</button>`;
-    if(gi===1)html+=`<button class="practicebtn" style="background:linear-gradient(90deg,#f472b6,#a855f7)" onclick="openAsk()">${L('🤝 How firmly to ask / say no?','🤝 أطلب أو أرفض بقوة قد إيه؟')}</button>`;
-    if(gi===2)html+=`<button class="practicebtn" style="background:linear-gradient(90deg,#fbbf24,#f59e0b);color:#3b2a08" onclick="openMyths()">${t('mythsBtn')}</button>`;
-    g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);
-      const row=`<div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
-        <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`;
-      if(s[0]==='Check the facts'||s[0]==='Describing emotions'){
-        html+=`<div class="skillrow">${row}<button class="skillgo" aria-label="Open guided walkthrough" onclick="launchCTF('${id}')">❯</button></div>`;
-      } else if(s[0]==='Radical Acceptance'){
-        html+=`<div class="skillrow">${row}<button class="skillgo" aria-label="Open Radical Acceptance walkthrough" onclick="launchRA('${id}')">❯</button></div>`;
-      } else { html+=row; }
+    const tm={0:['🧘 '+L('Practice','تمارين'),'openMindPicker()'],2:['🧠 '+L('Myths','خرافات'),'openMyths()']}[gi];
+    const gchips=`<button class="ghchip" onclick="openLearnModule(${gi})" aria-label="${L('Module guide','دليل الموديول')}">📖</button>`
+      +(tm?`<button class="ghchip" onclick="${tm[1]}" aria-label="tool">${tm[0]}</button>`:'');
+    html+=`<div class="group"><span class="dot" style="background:${g.color}"></span><h3>${grName(g)}</h3><span class="ghchips">${gchips}</span><span class="count">${done}/${g.skills.length}</span></div>`;
+    g.skills.forEach((s,si)=>{const id=gi+'_'+si,on=state.skills[id]?'on':'';const sub=skSub(s);const ln=LAUNCH[id];
+      html+=`<div class="srow"><div class="skill ${on}" onclick="toggle('${id}')"><div class="box">${state.skills[id]?'✓':''}</div>
+        <div class="name">${skName(s)}${sub?`<span class="sub">${sub}</span>`:''}</div></div>`+
+        `<button class="srbtn" onclick="openLearnAt(${gi},${si})" aria-label="Read about this skill">ⓘ</button>`+
+        (ln?`<button class="srbtn go" dir="ltr" onclick="${ln}" aria-label="Open guided tool">${LANG==='ar'?'◀':'▶'}</button>`:'')+`</div>`;
     });
   });
   document.getElementById('skills').innerHTML=html;
@@ -1259,6 +1286,9 @@ const LAUNCH={
  '0_1':"openMindId('breath')",      // Observe → Observe your breath
  '0_3':"openMindId('participate')", // Participate → Throw yourself in
  '1_0':'openAsk()',                 // Figure out goals → How firmly to ask/say no
+ '1_1':'openDear()',                // DEAR → DEAR MAN composer
+ '1_2':'openDear()',                // MAN-Mindful → DEAR MAN composer
+ '1_3':'openDear()',                // MAN → DEAR MAN composer
  '2_0':'openCTF()',                 // Describing emotions → Describe + Check the Facts
  '2_1':'openCTF()',                 // Check the facts → Describe + Check the Facts
  '3_4':'raOpen()',                  // Radical Acceptance → guided walkthrough
@@ -1273,37 +1303,64 @@ const ACRONYMS={
  '3_1':[['T','Temperature','الحرارة','Cold water on your face, or hold ice.','مياه باردة على وشك، أو امسك تلج.'],['I','Intense exercise','تمرين عنيف','Burn off energy for a few minutes.','احرق طاقة لكام دقيقة.'],['P','Paced breathing','تنفّس بإيقاع','Breathe out longer than you breathe in.','خلي الزفير أطول من الشهيق.'],['P','Paired muscle relaxation','استرخاء العضلات','Tense, then release muscle groups.','شُد، وبعدين سيب مجموعات العضلات.']],
  '3_3':[['A','Activities','أنشطة','Do something absorbing.','اعمل حاجة بتشغل بالك.'],['C','Contributing','مساعدة غيرك','Help someone else.','ساعد حد تاني.'],['C','Comparisons','مقارنات','Compare to a tougher time you got through.','قارن بوقت أصعب عدّيته.'],['E','Emotions','مشاعر مضادة','Create a different emotion (funny clip, music).','اعمل شعور مختلف (مقطع مضحك، موسيقى).'],['P','Push away','تنحية مؤقتة','Set the problem aside for now.','نحّي المشكلة شوية دلوقتي.'],['T','Thoughts','أفكار','Fill your mind (count, puzzles).','اشغل دماغك (عدّ، ألغاز).'],['S','Sensations','أحاسيس','A strong safe sensation (cold, taste).','إحساس قوي وآمن (برودة، طعم).']],
 };
+const MODULE_INFO=[
+ ["<b>Mindfulness</b> is the foundation of every other DBT skill: paying attention, on purpose, to the present moment — without judging it. It splits into the <b>“What” skills</b> (Observe, Describe, Participate — what you do) and the <b>“How” skills</b> (Non-judgmentally, One-mindfully, Effectively — how you do them), all centred on <b>Wise Mind</b>. The point isn’t to empty your mind; it’s to notice your experience so you can respond instead of react. You can’t change an emotion you haven’t noticed — so start here, with short daily practice.","<b>اليقظة</b> هي أساس كل مهارة تانية في الـDBT: إنك تدّي انتباهك، بقصد، للحظة الحالية — من غير ما تحكم عليها. وهي بتنقسم لـ<b>مهارات «ماذا»</b> (لاحظ، صِف، شارك — اللي بتعمله) و<b>مهارات «كيف»</b> (من غير أحكام، بتركيز، بفعالية — إزاي بتعمله)، وكلها مرتكزة على <b>العقل الحكيم</b>. الفكرة مش إنك تفضّي دماغك؛ الفكرة إنك تلاحظ تجربتك عشان ترُد بدل ما تتفاعل بتهور. مش هتقدر تغيّر شعور إنت مش واخد بالك منه — فابدأ من هنا، بتمرين يومي قصير."],
+ ["<b>Interpersonal Effectiveness</b> helps you ask for what you want, say no, and handle conflict — while keeping the relationship and your self-respect. The flow: get clear on your <b>goal</b>, decide <b>how firmly</b> to push (the ask/say-no tool), and choose <b>what to say</b> (DEAR MAN). Remember the three aims: <b>DEAR MAN</b> gets the objective, <b>GIVE</b> protects the relationship, <b>FAST</b> protects your self-respect — emphasise whichever matters most this time.","<b>فعالية العلاقات</b> بتساعدك تطلب اللي عايزه، وترفض، وتتعامل مع الخلاف — وإنت محافظ على العلاقة وعلى احترامك لذاتك. الترتيب: وضّح <b>هدفك</b>، قرر تضغط <b>بقوة قد إيه</b> (أداة الطلب/الرفض)، واختار <b>اللي هتقوله</b> (DEAR MAN). افتكر التلات أهداف: <b>DEAR MAN</b> بيحقق الهدف، <b>GIVE</b> بيحمي العلاقة، <b>FAST</b> بيحمي احترامك لذاتك — ركّز على الأهم في المرة دي."],
+ ["<b>Emotion Regulation</b> helps you understand, reduce, and change difficult emotions — and grow positive ones. The path: first <b>understand</b> the emotion (Describing emotions, Check the facts), then <b>change</b> it if it doesn’t fit the facts or doesn’t help (Opposite action, Problem solving), and <b>lower your vulnerability</b> over time (Accumulate positives, Build mastery, Cope ahead, PLEASE). Emotions aren’t the enemy — each one has a job. The goal is balance, not numbness.","<b>تنظيم المشاعر</b> بيساعدك تفهم وتقلل وتغيّر المشاعر الصعبة — وتنمّي الإيجابية. الطريق: الأول <b>افهم</b> الشعور (وصف المشاعر، مراجعة الحقائق)، وبعدين <b>غيّره</b> لو مش مناسب للحقايق أو مش مفيد (فعل العكس، حل المشكلة)، و<b>قلّل قابليتك</b> مع الوقت (اجمع الإيجابيات، الإتقان، الاستعداد المسبق، العناية بالجسم). المشاعر مش عدوّك — كل شعور ليه وظيفة. الهدف التوازن، مش التبلّد."],
+ ["<b>Survival &amp; Acceptance</b> (Distress Tolerance) is for moments of intense pain you can’t fix or change right now. <b>Crisis skills</b> (STOP, TIP, Pros &amp; Cons, Distract/Self-soothe/Improve) get you through the moment without making it worse. <b>Acceptance skills</b> (Radical Acceptance, Willingness, Mindfulness of thoughts, Half-smiling, Willing hands) help you stop fighting reality, so pain doesn’t harden into endless suffering. Reach for these when problem-solving isn’t possible yet.","<b>تجاوز المحن والقبول</b> للحظات الألم الشديد اللي مش قادر تحلها أو تغيّرها دلوقتي. <b>مهارات الأزمة</b> (STOP، TIP، المميزات والعيوب، التشتيت/تهدئة الذات/تحسين اللحظة) بتعدّيك اللحظة من غير ما تزوّدها سوء. <b>مهارات القبول</b> (القبول الجذري، الاستعداد والتقبّل، ملاحظة الأفكار، نص ابتسامة، الأيدي المتقبلة) بتساعدك تبطّل تحارب الواقع، عشان الألم ما يتحوّلش لمعاناة بلا نهاية. الجأ لها لما حل المشكلة لسه مش ممكن."],
+];
+// Mindfulness module sub-grouping in the Learn list (What / How skills around Wise Mind)
+const MOD_GROUPS={0:[
+  {h:['',''],idx:[0]},
+  {h:['“What” skills — what you do','مهارات «ماذا» — اللي بتعمله'],idx:[1,2,3]},
+  {h:['“How” skills — how you do it','مهارات «كيف» — إزاي بتعمله'],idx:[4,5,6]},
+]};
+// Three states of mind, shown on the Wise Mind page: [borderColor, titleEn, titleAr, descEn, descAr]
+const MINDSTATES=[
+  ['#38bdf8','Reasonable Mind','العقل المنطقي','Cool, logical, task-focused — planning, facts, and reason. Useful, but on its own it can miss what matters emotionally.','هادي، منطقي، مركّز على المهمة — تخطيط وحقايق ومنطق. مفيد، بس لوحده ممكن يفوته اللي مهم عاطفيًا.'],
+  ['#f472b6','Emotional Mind','العقل العاطفي','Hot, mood-driven, ruled by feelings and urges. Powerful and important, but on its own it can act impulsively and make things worse.','ساخن، متحكّم فيه المزاج، بتسيطر عليه المشاعر والرغبات. قوي ومهم، بس لوحده ممكن يتصرف بتهور ويزوّد الأمور سوء.'],
+  ['#34d399','Wise Mind','العقل الحكيم','The overlap of the two — where reason and emotion meet, plus intuition. Calm, centered, and it knows what truly fits.','تقاطع الاتنين — حيث يلتقي المنطق والعاطفة ويُضاف لهم الحدس. هادي، متّزن، وعارف اللي مناسب فعلًا.'],
+];
 let learn={};
-function openLearn(){closeMenu();learn={view:'home'};document.getElementById('learn').classList.add('show');history.pushState({lv:'home'},'');renderLearn();}
+function openLearn(){closeMenu();learn={view:'home'};document.getElementById('learn').classList.add('show');history.pushState({lv:'home',depth:1},'');renderLearn();}
+function openLearnModule(gi){closeMenu();learn={view:'module',gi};document.getElementById('learn').classList.add('show');history.pushState({lv:'module',depth:1},'');renderLearn();}
+function openLearnAt(gi,si){closeMenu();learn={view:'skill',gi,si};document.getElementById('learn').classList.add('show');history.pushState({lv:'skill',depth:1},'');renderLearn();}
 function closeLearn(){if(!document.getElementById('learn').classList.contains('show'))return;
-  const depth={home:1,module:2,skill:3}[learn.view]||1;document.getElementById('learn').classList.remove('show');render();
-  if(history.state&&history.state.lv)history.go(-depth);}
-function learnModule(gi){learn.view='module';learn.gi=gi;history.pushState({lv:'module'},'');renderLearn();}
-function learnSkill(gi,si){learn.view='skill';learn.gi=gi;learn.si=si;history.pushState({lv:'skill'},'');renderLearn();}
+  const d=(history.state&&history.state.depth)||0;document.getElementById('learn').classList.remove('show');render();if(d)history.go(-d);}
+function learnModule(gi){const d=(history.state&&history.state.depth)||1;learn.view='module';learn.gi=gi;history.pushState({lv:'module',depth:d+1},'');renderLearn();}
+function learnSkill(gi,si){const d=(history.state&&history.state.depth)||1;learn.view='skill';learn.gi=gi;learn.si=si;history.pushState({lv:'skill',depth:d+1},'');renderLearn();}
 window.addEventListener('popstate',e=>{
   if(!document.getElementById('learn').classList.contains('show'))return;
   const lv=e.state&&e.state.lv;
   if(lv==='home'){learn.view='home';renderLearn();}
   else if(lv==='module'){learn.view='module';renderLearn();}
+  else if(lv==='skill'){learn.view='skill';renderLearn();}
   else{document.getElementById('learn').classList.remove('show');render();}  // backed out → diary
 });
 function renderLearn(){
   const chev=LANG==='ar'?'‹':'›';const b=document.getElementById('learnBody');b.scrollTop=0;
+  const lb=document.getElementById('learnBack');if(lb)lb.textContent=LANG==='ar'?'›':'‹';
   if(learn.view==='home'){
     document.getElementById('learnTitle').textContent=t('learnTitle');
-    let h=GROUPS.map((g,gi)=>`<button class="lrow" onclick="learnModule(${gi})"><span class="dot" style="background:${g.color}"></span><span class="lt"><b>${grName(g)}</b><small>${g.skills.length} ${L('skills','مهارة')}</small></span><span class="chev">${chev}</span></button>`).join('');
-    h+=`<button class="lrow" onclick="closeLearn();openMyths()"><span style="font-size:22px">🧠</span><span class="lt"><b>${L('Myths about emotions','خرافات عن المشاعر')}</b><small>${L('20 myths + challenges','٢٠ خرافة + ردود')}</small></span><span class="chev">${chev}</span></button>`;
+    let h=GROUPS.map((g,gi)=>`<button class="lrow" onclick="learnModule(${gi})"><span class="dot" style="background:${g.color}"></span><span class="lt"><b>${grName(g)}</b><small>${g.skills.length} ${L('skills','مهارة')}</small></span><span class="chev" dir="ltr">${chev}</span></button>`).join('');
+    h+=`<button class="lrow" onclick="closeLearn();openMyths()"><span style="font-size:22px">🧠</span><span class="lt"><b>${L('Myths about emotions','خرافات عن المشاعر')}</b><small>${L('20 myths + challenges','٢٠ خرافة + ردود')}</small></span><span class="chev" dir="ltr">${chev}</span></button>`;
     b.innerHTML=h;
     document.getElementById('learnNav').innerHTML=`<div class="navin"><button class="next" onclick="closeLearn()">${L('Close','إغلاق')}</button></div>`;
   } else if(learn.view==='module'){
     const g=GROUPS[learn.gi];document.getElementById('learnTitle').textContent=grName(g);
-    b.innerHTML=g.skills.map((s,si)=>`<button class="lrow" onclick="learnSkill(${learn.gi},${si})"><span class="lt"><b>${skName(s)}</b></span><span class="chev">${chev}</span></button>`).join('');
+    const lrow=si=>`<button class="lrow" onclick="learnSkill(${learn.gi},${si})"><span class="lt"><b>${skName(g.skills[si])}</b></span><span class="chev" dir="ltr">${chev}</span></button>`;
+    let h=`<div class="modintro" style="border-inline-start-color:${g.color}">${L(MODULE_INFO[learn.gi][0],MODULE_INFO[learn.gi][1])}</div>`;
+    const secs=MOD_GROUPS[learn.gi];
+    if(secs)h+=secs.map(sec=>((sec.h[0]||sec.h[1])?`<div class="lhead">${L(sec.h[0],sec.h[1])}</div>`:'')+sec.idx.map(lrow).join('')).join('');
+    else h+=g.skills.map((s,si)=>lrow(si)).join('');
+    b.innerHTML=h;
     document.getElementById('learnNav').innerHTML=`<div class="navin"><button class="back" onclick="history.back()">${L('Back','رجوع')}</button></div>`;
   } else {
     const g=GROUPS[learn.gi],s=g.skills[learn.si],key=learn.gi+'_'+learn.si,info=SKILLS_INFO[key]||[],acro=ACRONYMS[key];
     document.getElementById('learnTitle').textContent=skName(s);
     let h=`<p class="step-q">${skName(s)}</p>`;
     if(info[0])h+=`<div class="infosec"><div class="ih">${t('iWhat')}</div><p>${L(info[0],info[1])}</p></div>`;
+    if(key==='0_0')h+=`<div class="infosec"><div class="ih">${L('The three states of mind','حالات العقل الثلاثة')}</div>`+MINDSTATES.map(m=>`<div class="mindstate" style="border-inline-start-color:${m[0]}"><b>${L(m[1],m[2])}</b><span>${L(m[3],m[4])}</span></div>`).join('')+`</div>`;
     if(acro)h+=`<div class="infosec"><div class="ih">${L('What the letters mean','معنى الحروف')}</div>`+acro.map(a=>`<div class="acrorow"><div class="acrobadge">${a[0]}</div><div class="acrotxt"><b>${L(a[1],a[2])}</b>${L(a[3],a[4])}</div></div>`).join('')+`</div>`;
     if(info[2])h+=`<div class="infosec"><div class="ih">${t('iHow')}</div><p>${L(info[2],info[3])}</p></div>`;
     if(info[4])h+=`<div class="infosec"><div class="ih">${t('iWhen')}</div><p>${L(info[4],info[5])}</p></div>`;
@@ -1342,11 +1399,18 @@ const MYTHS_INTRO=[
   "في الـDBT، المشاعر مش «حلوة» ولا «وحشة» — كل شعور ليه وظيفة وله معنى حسب أسبابه. بس كلنا بنتشرب <b>خرافات</b> عن المشاعر (زي «المشاعر السلبية وحشة»، «إنك تكون عاطفي يعني فاقد السيطرة»). المعتقدات دي بتزوّد <i>طبقة تانية من المعاناة</i>، وبتدفعنا نكبت مشاعرنا أو نحكم عليها أو نثق فيها زيادة.<br><br>المهارة إنك <b>تمسك كل خرافة وتردّ عليها برد</b> متوازن وأقرب للحقيقة. تحت هتلاقي ٢٠ خرافة شائعة، كل واحدة معاها رد. اقراهم، وبعدين اكتب ردّك بكلماتك إنت — ده اللي بيثبّت الفكرة.",
 ];
 let myth={};
-function openMyths(){myth={step:'intro',i:0,mine:JSON.parse(localStorage.getItem('dbt_myths')||'{}')};document.getElementById('myth').classList.add('show');renderMyth();}
+const esc=s=>String(s||'').replace(/</g,'&lt;');
+function openMyths(){myth={step:'intro',i:0,mine:JSON.parse(localStorage.getItem('dbt_myths')||'{}'),custom:JSON.parse(localStorage.getItem('dbt_myths_custom')||'[]')};document.getElementById('myth').classList.add('show');renderMyth();}
 function closeMyths(){document.getElementById('myth').classList.remove('show');render();}
 function mythStart(){myth.step='card';myth.i=0;renderMyth();}
+function mythTotal(){return MYTHS.length+myth.custom.length+1;}  // +1 = the "add your own" card
 function mythSave(v){myth.mine[myth.i]=v;localStorage.setItem('dbt_myths',JSON.stringify(myth.mine));}
-function mythGo(d){myth.i=(myth.i+d+MYTHS.length)%MYTHS.length;renderMyth();}
+function mythCustomSet(ci,f,v){myth.custom[ci][f]=v;localStorage.setItem('dbt_myths_custom',JSON.stringify(myth.custom));}
+function mythDel(ci){myth.custom.splice(ci,1);localStorage.setItem('dbt_myths_custom',JSON.stringify(myth.custom));myth.i=MYTHS.length+myth.custom.length;renderMyth();}
+function mythAdd(){const mm=(document.getElementById('newMyth').value||'').trim();if(!mm)return toast(L('Write the myth first','اكتب الخرافة الأول'));
+  myth.custom.push({m:mm,c:(document.getElementById('newCh').value||'').trim()});localStorage.setItem('dbt_myths_custom',JSON.stringify(myth.custom));
+  myth.i=MYTHS.length+myth.custom.length-1;renderMyth();}
+function mythGo(d){const tt=mythTotal();myth.i=(myth.i+d+tt)%tt;renderMyth();}
 function renderMyth(){
   const b=document.getElementById('mythBody');b.scrollTop=0;
   if(myth.step==='intro'){
@@ -1356,18 +1420,90 @@ function renderMyth(){
     document.getElementById('mythNav').innerHTML=`<div class="navin"><button class="back" onclick="closeMyths()">${L('Close','إغلاق')}</button><button class="next" onclick="mythStart()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
     return;
   }
-  const m=MYTHS[myth.i];
-  document.getElementById('mythTitle').textContent=t('mythsTitle')+' · '+(myth.i+1)+'/'+MYTHS.length;
-  document.getElementById('mythProg').style.width=((myth.i+1)/MYTHS.length*100)+'%';
-  b.innerHTML=
-    `<p class="mythq">“${L(m[0],m[1])}”</p>
+  const total=mythTotal(),last=myth.i===total-1;
+  document.getElementById('mythTitle').textContent=t('mythsTitle')+' · '+(myth.i+1)+'/'+total;
+  document.getElementById('mythProg').style.width=((myth.i+1)/total*100)+'%';
+  if(myth.i<MYTHS.length){
+    const m=MYTHS[myth.i];
+    b.innerHTML=`<p class="mythq">“${L(m[0],m[1])}”</p>
      <div class="mythch"><span class="cl">${t('mythChallenge')}</span>${L(m[2],m[3])}</div>
      <div class="lab" style="margin-top:16px">${t('myChallenge')}</div>
-     <textarea placeholder="${t('myChPh')}" oninput="mythSave(this.value)">${myth.mine[myth.i]||''}</textarea>`;
-  const last=myth.i===MYTHS.length-1;
+     <textarea placeholder="${t('myChPh')}" oninput="mythSave(this.value)">${esc(myth.mine[myth.i])}</textarea>`;
+  } else if(myth.i<MYTHS.length+myth.custom.length){
+    const ci=myth.i-MYTHS.length,c=myth.custom[ci];
+    b.innerHTML=`<div class="lab">${L('Your myth','خرافتك')}</div>
+     <textarea oninput="mythCustomSet(${ci},'m',this.value)">${esc(c.m)}</textarea>
+     <div class="lab" style="margin-top:12px">${t('myChallenge')}</div>
+     <textarea placeholder="${t('myChPh')}" oninput="mythCustomSet(${ci},'c',this.value)">${esc(c.c)}</textarea>
+     <button class="canttell" style="background:#3b1d1d;border-color:#7f1d1d;color:#fca5a5" onclick="mythDel(${ci})">${L('🗑 Delete this myth','🗑 احذف الخرافة دي')}</button>`;
+  } else {
+    b.innerHTML=`<p class="step-q">➕ ${L('Add your own myth','ضيف خرافة من عندك')}</p>
+     <p class="step-h">${L('A belief about emotions you want to challenge, in your own words. It’s saved on this device.','معتقد عن المشاعر عايز تتحدّاه، بكلامك إنت. بيتحفظ على الجهاز ده.')}</p>
+     <div class="lab">${L('The myth / belief','الخرافة / المعتقد')}</div>
+     <textarea id="newMyth" placeholder="${L('e.g. “If I cry, I’m weak.”','مثال: «لو عيّطت، يبقى أنا ضعيف.»')}"></textarea>
+     <div class="lab" style="margin-top:12px">${L('Your challenge','ردّك عليها')}</div>
+     <textarea id="newCh" placeholder="${t('myChPh')}"></textarea>
+     <button class="ctfopen" style="background:var(--accent2)" onclick="mythAdd()">${L('Add this myth','ضيف الخرافة')}</button>`;
+  }
   const backFn=myth.i===0?"myth.step='intro';renderMyth()":"mythGo(-1)";
   document.getElementById('mythNav').innerHTML=`<div class="navin"><button class="back" onclick="${backFn}">${L('Back','رجوع')}</button><button class="next" onclick="${last?'closeMyths()':'mythGo(1)'}">${last?L('Done','تمام'):L('Next','التالي')}</button></div>`;
 }
+
+/* ===================== DEAR MAN script composer ===================== */
+const DEAR_ORDER=['intro','describe','express','assert','reinforce','negotiate','result'];
+let dear={};
+function openDear(){dear={step:'intro'};document.getElementById('dear').classList.add('show');renderDear();}
+function closeDear(){document.getElementById('dear').classList.remove('show');render();}
+function dearGo(s){dear.step=s;renderDear();document.getElementById('dearBody').scrollTop=0;}
+function dearNext(){const i=DEAR_ORDER.indexOf(dear.step);if(i<DEAR_ORDER.length-1)dearGo(DEAR_ORDER[i+1]);}
+function dearPrev(){const i=DEAR_ORDER.indexOf(dear.step);if(i>0)dearGo(DEAR_ORDER[i-1]);else closeDear();}
+function dearNav(html){document.getElementById('dearNav').innerHTML=`<div class="navin">${html}</div>`;}
+function dearScript(){
+  const parts=[dear.describe,dear.express,dear.assert,dear.reinforce].map(x=>(x||'').trim()).filter(Boolean);
+  let s=parts.join(' ');
+  if((dear.negotiate||'').trim())s+=(s?'\n\n':'')+L('If that’s not possible: ','لو ده مش ممكن: ')+dear.negotiate.trim();
+  return s;
+}
+function dearField(q,help,field,ph,ex){
+  return `<p class="step-q">${q}</p><p class="step-h">${help}</p>
+    <textarea placeholder="${ph}" oninput="dear.${field}=this.value">${dear[field]||''}</textarea>
+    ${ex?`<p class="step-h" style="margin-top:10px">${ex}</p>`:''}`;
+}
+function renderDear(){
+  const b=document.getElementById('dear'+'Body'),s=dear.step;
+  document.getElementById('dearProg').style.width=(Math.max(0,DEAR_ORDER.indexOf(s))/(DEAR_ORDER.length-1)*100)+'%';
+  document.getElementById('dearTitle').textContent=L('DEAR MAN script','رسالة DEAR MAN');
+  let h='';
+  if(s==='intro'){
+    h=`<p class="step-q">${L('Build a DEAR MAN script','اكتب رسالة DEAR MAN')}</p>
+    <p class="step-h">${L('DEAR MAN is the DBT skill for asking for something — or saying no — effectively. Fill in each part and you’ll get a clear message you can actually send or say. <b>D-E-A-R</b> is <i>what</i> you say; <b>M-A-N</b> is <i>how</i> you deliver it.','DEAR MAN هي مهارة الـDBT للطلب أو الرفض بفعالية. إملا كل جزء وهتطلع برسالة واضحة تقدر تبعتها أو تقولها فعلًا. <b>D-E-A-R</b> هو <i>اللي</i> بتقوله؛ <b>M-A-N</b> هو <i>إزاي</i> بتقوله.')}</p>`;
+    dearNav(`<button class="next" onclick="dearNext()">${L('Start','ابدأ')} ${LANG==='ar'?'◂':'▸'}</button>`);b.innerHTML=h;return;
+  }
+  if(s==='describe')h=dearField(L('D · Describe','D · صِف'),L('State just the facts of the situation — no judgments or blame.','اذكر حقايق الموقف بس — من غير أحكام أو لوم.'),'describe',L('Just the facts…','الحقايق بس…'),L('e.g. “The last two times I asked for help, I didn’t get a reply.”','مثال: «آخر مرتين طلبت فيهم مساعدة، ماجاليش رد.»'));
+  else if(s==='express')h=dearField(L('E · Express','E · عبّر'),L('Say how you feel using “I” statements — don’t blame or mind-read.','قول شعورك بصيغة «أنا» — من غير لوم أو قراءة أفكار.'),'express',L('“I feel…”','«أنا حاسس…»'),L('e.g. “I feel overwhelmed and a bit alone with this.”','مثال: «حاسس إني متحمّل أكتر من طاقتي وشويه لوحدي.»'));
+  else if(s==='assert')h=dearField(L('A · Assert','A · أكّد'),L('Ask clearly for what you want, or say no clearly. Don’t expect them to read your mind.','اطلب بوضوح اللي عايزه، أو ارفض بوضوح. متستناش إنهم يقروا أفكارك.'),'assert',L('Your clear ask or no…','طلبك أو رفضك بوضوح…'),L('e.g. “I’d like us to split the chores this week.”','مثال: «نفسي نقسّم شغل البيت بينا الأسبوع ده.»'));
+  else if(s==='reinforce')h=dearField(L('R · Reinforce','R · عزّز'),L('Tell them what’s in it for them — the positive effect of saying yes.','قول لهم الفايدة اللي هتعود عليهم — الأثر الإيجابي لو وافقوا.'),'reinforce',L('The benefit to them…','الفايدة ليهم…'),L('e.g. “It would really help me relax and have more energy for us.”','مثال: «ده هيساعدني أرتاح ويبقى عندي طاقة أكتر لينا.»'));
+  else if(s==='negotiate')h=dearField(L('N · Negotiate (optional)','N · تفاوض (اختياري)'),L('What could you accept if they can’t fully say yes? Be willing to give to get.','إيه البديل اللي تقدر تقبله لو مش هيقدروا يوافقوا بالكامل؟ كن مستعد تدّي علشان تاخد.'),'negotiate',L('A fallback you’d accept…','بديل تقبله…'),L('e.g. “If this week is hard, can we start Monday?”','مثال: «لو الأسبوع ده صعب، نبدأ الإتنين؟»'));
+  else if(s==='result'){
+    state.skills['1_1']=true;save();
+    h=`<p class="step-q">${L('Your DEAR MAN script','رسالتك بأسلوب DEAR MAN')}</p>
+    <div class="sumbox">${(dearScript()||L('(fill in the parts)','(إملا الأجزاء)')).replace(/</g,'&lt;')}</div>
+    <div class="lab" style="margin-top:16px">${L('Deliver it with — M · A · N','وصّلها بـ — M · A · N')}</div>
+    <ul class="steplist">
+      <li><b>Mindful</b> — ${L('stay on track; broken record, ignore attacks','فضل على هدفك؛ اسطوانة مشروخة، تجاهل الهجوم')}</li>
+      <li><b>Appear confident</b> — ${L('steady voice, eye contact, upright posture','صوت ثابت، تواصل بالعين، وقفة معتدلة')}</li>
+      <li><b>Negotiate</b> — ${L('be willing to give to get','كن مستعد تدّي علشان تاخد')}</li>
+    </ul>
+    <button class="ctfopen" style="background:var(--accent2)" onclick="dearToNotes()">${L('＋ Add to '+(curKey===todayKey()?'today':'this day')+'’s notes','＋ ضيف لملاحظات '+(curKey===todayKey()?'النهارده':'اليوم ده'))}</button>
+    <button class="canttell" onclick="dearShareMsg()">${L('📲 Send the message (WhatsApp)','📲 ابعت الرسالة (واتساب)')}</button>
+    <button class="canttell" onclick="navigator.clipboard.writeText(dearScript()).then(()=>toast(t('copied')))">${L('📋 Copy the script','📋 انسخ الرسالة')}</button>`;
+    dearNav(`<button class="back" onclick="dearPrev()">${L('Back','رجوع')}</button><button class="next" onclick="closeDear()">${L('Done','تمام')}</button>`);b.innerHTML=h;return;
+  }
+  dearNav(`<button class="back" onclick="dearPrev()">${L('Back','رجوع')}</button><button class="next" onclick="dearNext()">${L('Next','التالي')} ${LANG==='ar'?'◂':'▸'}</button>`);
+  b.innerHTML=h;
+}
+function dearShareMsg(){location.href='https://wa.me/?text='+encodeURIComponent(dearScript());}
+function dearToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+'🗣️ DEAR MAN — '+pretty(curKey)+'\n'+dearScript();save();render();toast(t('addedNotes'));closeDear();}
 
 curKey=defaultKey();load();applyLang();gate();
 if(location.hash==='#archive')showArchive();
