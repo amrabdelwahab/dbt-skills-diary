@@ -245,6 +245,52 @@
     height:38px;min-width:42px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:700;
     display:inline-flex;align-items:center;justify-content:center;line-height:1}
   [dir=rtl] .sumbox{text-align:right}
+  /* ---- multi-diary (check-in + free writing) ---- */
+  .qblock{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+  .qblock .ql{margin:0 0 3px;font-size:16px;font-weight:700;line-height:1.35}
+  .qblock .qh{margin:0 0 10px;color:var(--muted);font-size:13px;line-height:1.45}
+  .qblock textarea{min-height:78px}
+  .sc{display:flex;gap:6px}
+  .sc button{flex:1;min-width:0;padding:13px 0;border:1px solid var(--line);background:var(--card2);
+    color:var(--ink);border-radius:10px;font-size:16px;font-weight:700}
+  .sc button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .sc.warm button.on{background:#f59e0b;border-color:#f59e0b;color:#3b2a08}
+  .sc.warm button.lo.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .sc.warm button.hi.on{background:#ef4444;border-color:#ef4444;color:#fff}
+  .sc.good button.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .scends{display:flex;justify-content:space-between;gap:12px;margin-top:7px;color:var(--muted);font-size:11.5px;line-height:1.3}
+  .scends span{flex:1;min-width:0}
+  .scends span+span{text-align:end}
+  .numrow{display:flex;align-items:center;gap:10px}
+  .numrow input{flex:1;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);padding:13px;font:inherit}
+  .numrow .unit{flex:none;color:var(--muted);font-size:14px;font-weight:600}
+  .ynrow{display:flex;gap:8px}
+  .ynrow button{flex:1;padding:14px 0;border:1px solid var(--line);background:var(--card2);
+    color:var(--ink);border-radius:10px;font-size:15px;font-weight:700}
+  .ynrow button.on{color:#fff}
+  .ynrow button.y.on{background:var(--accent2);border-color:var(--accent2)}
+  .ynrow button.n.on{background:#64748b;border-color:#64748b}
+  .pbname{width:100%;background:var(--card2);border:1px dashed var(--line);border-radius:10px;
+    color:var(--ink);padding:11px;font:inherit;font-weight:700;margin-bottom:10px}
+  .chkday{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;margin:0 0 4px}
+  .chkday b{flex:1;font-size:14px;min-width:0}
+  .chkday input{background:var(--card);border:1px solid var(--line);border-radius:9px;color:var(--ink);
+    padding:8px;font:inherit;font-size:13px}
+  .skipnote{color:var(--muted);font-size:12.5px;text-align:center;margin:14px 4px 0;line-height:1.45}
+  .sumjump{display:block;width:100%;text-align:start;background:var(--card2);border:1px solid var(--line);
+    color:var(--ink);border-radius:10px;padding:12px;margin:8px 0 0;font-size:14px;font-weight:600}
+  .freearea{min-height:44vh;line-height:1.6;font-size:16px}
+  .stampbtn{display:block;width:100%;margin:10px 0 0;background:var(--card2);border:1px solid var(--line);
+    color:var(--ink);border-radius:12px;padding:13px;font-size:14px;font-weight:700}
+  .stampbtn:active{border-color:var(--accent)}
+  .afilter{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch}
+  .afilter button{flex:none;background:var(--card2);border:1px solid var(--line);color:var(--ink);
+    border-radius:20px;padding:8px 13px;font-size:13px;font-weight:700;white-space:nowrap}
+  .afilter button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .arow .aic{flex:none;font-size:21px;line-height:1}
+  .arow .ad .ty{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
@@ -291,7 +337,14 @@
 
 <div class="wrap" id="homeView" style="display:none"></div>
 
+<div class="wrap" id="freeView" style="display:none">
+  <div class="chips" id="freePrompts"></div>
+  <textarea id="freeText" class="freearea" dir="auto"></textarea>
+  <button class="stampbtn" id="stampBtn" onclick="stampTime()">🕐 Add a time stamp</button>
+</div>
+
 <div class="wrap" id="archiveView" style="display:none">
+  <div class="afilter" id="archiveFilter"></div>
   <div id="archiveList"></div>
 </div>
 
@@ -302,7 +355,7 @@
 </div>
 
 <div class="bar" id="archiveBar" style="display:none">
-  <button class="em" id="backBtn" onclick="showDay()">← Back to entry</button>
+  <button class="em" id="backBtn" onclick="showHome()">← Home</button>
 </div>
 
 <div class="menu" id="menu" onclick="if(event.target.id==='menu')closeMenu()">
@@ -414,6 +467,14 @@
   <div class="nav" id="oppoNav"></div>
 </div>
 
+<!-- Daily check-in (weekly card, one question at a time) -->
+<div class="ctf" id="chk">
+  <div class="top"><button class="x" onclick="closeCheck()">✕</button><h2 id="chkTitle">Daily check-in</h2></div>
+  <div class="prog"><i id="chkProg"></i></div>
+  <div class="body" id="chkBody"></div>
+  <div class="nav" id="chkNav"></div>
+</div>
+
 <!-- Mindfulness practice -->
 <div class="ctf" id="mind">
   <div class="top">
@@ -471,7 +532,8 @@ const GROUPS = [
 const cfg = JSON.parse(localStorage.getItem('dbt_cfg')||'{}');
 let curKey;        // 'YYYY-MM-DD' currently shown
 let state = {};
-let view = 'day';  // 'day' | 'archive'
+let view = 'day';       // 'home' | 'day' (skills diary) | 'free' (free writing) | 'archive'
+let arcFilter = 'all';  // archive filter: all | skills | check | free
 
 /* ---------- i18n (en / ar) ---------- */
 let LANG = cfg.lang || 'en';
@@ -488,6 +550,7 @@ const T = {
   whatsapp:['WhatsApp','واتساب'],
   email:['Email','إيميل'],
   backEntry:['← Back to entry','→ رجوع لليوم'],
+  backHome:['← Home','→ الرئيسية'],
   mArchive:['🗂️ View archive (all days)','🗂️ الأرشيف (كل الأيام)'],
   mCopy:['📋 Copy this day as text','📋 نسخ اليوم كنص'],
   mWa:["👤 Set therapist's WhatsApp number",'👤 رقم واتساب المعالج'],
@@ -569,7 +632,7 @@ function applyLang(){
   document.getElementById('notes').placeholder=t('notesPh');
   document.getElementById('waBtn').textContent=t('whatsapp');
   document.getElementById('emailBtn').textContent=t('email');
-  document.getElementById('backBtn').textContent=t('backEntry');
+  document.getElementById('backBtn').textContent=t('backHome');
   document.getElementById('lockTitle').textContent=t('lockTitle');
   document.getElementById('lockHint').textContent=t('lockHint');
   document.getElementById('unlockBtn').textContent=t('unlock');
@@ -578,7 +641,9 @@ function applyLang(){
   buildMenu();
   if(view==='home'){showHome();}
   else if(view==='archive'){showArchive();}
-  else{document.getElementById('title').textContent=t('appTitle');render();}
+  else if(view==='free'){showFree(curKey);}
+  else{document.getElementById('title').textContent=L('Skills diary','مذكرة المهارات');render();}
+  if(document.getElementById('chk').classList.contains('show'))renderChk();
   maybeShowInstall();
   try{caches.open('dbt-cfg').then(c=>c.put('/lang',new Response(LANG)));}catch(_){}  // let the SW localize push text
 }
@@ -651,21 +716,35 @@ function render(){
 function toggle(id){state.skills[id]=!state.skills[id];save();render();}
 function setUse(n){state.use=n;save();render();}
 document.getElementById('notes').addEventListener('input',e=>{state.notes=e.target.value;save();});
-function step(d){curKey=shiftKey(curKey,d);load();window.scrollTo(0,0);}
+function step(d){curKey=shiftKey(curKey,d);if(view==='free')loadFree();else load();window.scrollTo(0,0);}
 function shiftKey(k,d){const dt=keyToDate(k);dt.setDate(dt.getDate()+d);
   return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());}
 
 /* ---------- views ---------- */
 function setHeader(v){
   const sh=(id,show)=>{const e=document.getElementById(id);if(e)e.style.display=show?'':'none';};
-  sh('homeBtn',v!=='home'); sh('menuBtn',v!=='day'); sh('dnPrev',v==='day'); sh('dnNext',v==='day');
+  const dayNav=(v==='day'||v==='free');   // ‹ › step through days on the two scrolling diaries
+  sh('homeBtn',v!=='home'); sh('menuBtn',!dayNav); sh('dnPrev',dayNav); sh('dnNext',dayNav);
+}
+// Show exactly one body view + its bottom bar. v: home | day | free | archive
+function showView(v){
+  view=v;
+  ['homeView','dayView','freeView','archiveView'].forEach(id=>
+    document.getElementById(id).style.display=(id===v+'View')?'':'none');
+  document.getElementById('dayBar').style.display=(v==='day'||v==='free')?'flex':'none';
+  document.getElementById('archiveBar').style.display=(v==='archive')?'flex':'none';
+  setHeader(v);
 }
 function card(ic,col,fn,t1,t2){return `<button class="homecard" style="border-inline-start-color:${col}" onclick="${fn}"><span class="hci">${ic}</span><span class="hct"><b>${t1}</b><small>${t2}</small></span></button>`;}
 function renderHome(){
   document.getElementById('homeView').innerHTML=
     `<div class="homehero"><h1>${L('DBT Skills Diary','مذكرة مهارات DBT')}</h1><p>${L('Your daily skills companion','رفيقك اليومي للمهارات')}</p></div>`
     +card('🆘','#ef4444','openHelp()',L('I need help','محتاج مساعدة'),L('Answer a few questions → find the right skill','جاوب كام سؤال ← لاقي المهارة المناسبة'))
-    +card('📓','#6366f1','showDay()',L('Daily diary','المذكرة اليومية'),L('Check off today’s skills & send to your therapist','علّم مهارات اليوم وابعتها للمعالج'))
+    +`<div class="lhead">${L('My diaries','مذكراتي')}</div>`
+    +card('📓','#6366f1','showDay()',L('Skills diary','مذكرة المهارات'),L('Tick the skills you used today','علّم المهارات اللي استخدمتها النهارده'))
+    +card('📋','#14b8a6','openCheck()',L('Daily check-in','المتابعة اليومية'),L('Sleep, urges, skills — one question at a time','النوم والرغبات والمهارات — سؤال ورا سؤال'))
+    +card('📝','#f59e0b','showFree()',L('Free writing','كتابة حرة'),L('Just write — no boxes to fill','اكتب وبس — من غير خانات'))
+    +`<div class="lhead">${L('Learn & practise','اتعلّم واتمرّن')}</div>`
     +card('📖','#a855f7','openLearn()',L('Learn the skills','اتعلّم المهارات'),L('Read about every DBT skill','اقرأ عن كل مهارة'))
     +card('🧘','#0ea5e9','openMindPicker()',L('Practice mindfulness','تمارين اليقظة'),L('Guided breathing & grounding','تمارين تنفّس و Grounding موجّهة'))
     +card('🧰','#22c55e','openTools()',L('Guided tools','الأدوات الموجّهة'),L('Check the Facts, DEAR MAN, and more','مراجعة الحقائق، DEAR MAN، وأكتر'))
@@ -675,52 +754,62 @@ function renderHome(){
       +(isStandalone()?'':`<button class="homemini" onclick="menuInstall()">📲 <span>${L('Add to Home Screen','أضف للشاشة')}</span></button>`)
     +`</div>`;
 }
-function showHome(){view='home';if(location.hash)history.replaceState(null,'','./');
-  document.getElementById('homeView').style.display='';
-  document.getElementById('dayView').style.display='none';
-  document.getElementById('archiveView').style.display='none';
-  document.getElementById('dayBar').style.display='none';
-  document.getElementById('archiveBar').style.display='none';
+function showHome(){if(location.hash)history.replaceState(null,'','./');
+  showView('home');
   document.getElementById('title').textContent=t('appTitle');
   document.getElementById('dateLine').textContent='';
-  setHeader('home');renderHome();window.scrollTo(0,0);}
-function showDay(){view='day';if(location.hash)history.replaceState(null,'','./');document.getElementById('dayView').style.display='';
-  document.getElementById('homeView').style.display='none';
-  document.getElementById('archiveView').style.display='none';
-  document.getElementById('dayBar').style.display='flex';
-  document.getElementById('archiveBar').style.display='none';
-  document.getElementById('title').textContent=t('appTitle');
-  setHeader('day');curKey=defaultKey();load();window.scrollTo(0,0);}
-function showArchive(){view='archive';closeMenu();
+  renderHome();window.scrollTo(0,0);}
+function showDay(k){if(location.hash)history.replaceState(null,'','./');
+  showView('day');
+  document.getElementById('title').textContent=L('Skills diary','مذكرة المهارات');
+  curKey=k||defaultKey();load();window.scrollTo(0,0);}
+function openArchiveDay(k){showDay(k);}
+function showArchive(){closeMenu();
   if(location.hash!=='#archive')history.replaceState(null,'','#archive');
-  document.getElementById('homeView').style.display='none';setHeader('archive');
-  document.getElementById('dayView').style.display='none';
-  document.getElementById('archiveView').style.display='';
-  document.getElementById('dayBar').style.display='none';
-  document.getElementById('archiveBar').style.display='flex';
+  showView('archive');
   document.getElementById('title').textContent=t('archive');
   document.getElementById('dateLine').textContent=t('allDays');
-  const keys=Object.keys(localStorage).filter(k=>/^dbt_\d{4}-\d{2}-\d{2}$/.test(k))
-    .map(k=>k.slice(4)).sort().reverse();
+  const F=[['all','🗂️',L('All','الكل')],['skills','📓',L('Skills','المهارات')],
+           ['check','📋',L('Check-in','المتابعة',)],['free','📝',L('Writing','الكتابة')]];
+  document.getElementById('archiveFilter').innerHTML=F.map(f=>
+    `<button class="${arcFilter===f[0]?'on':''}" onclick="setArcFilter('${f[0]}')">${f[1]} ${f[2]}</button>`).join('');
   const list=document.getElementById('archiveList');
-  if(!keys.length){list.innerHTML=`<div class="empty">${t('noDays')}</div>`;return;}
-  list.innerHTML=keys.map(k=>{
-    const s=JSON.parse(localStorage.getItem('dbt_'+k)||'{}');const sk=s.skills||{};
-    const n=Object.values(sk).filter(Boolean).length;
-    const skw=LANG==='ar'?(n+' مهارة'):(n+' skill'+(n===1?'':'s'));
-    return `<div class="arow" onclick="openArchiveDay('${k}')">
-      <div class="ad"><b>${prettyShort(k)}</b><small>${skw} · ${s.notes?t('hasNotes'):'—'}</small></div>
-      <div class="pill">${s.use!=null?s.use+'/7':'–'}</div></div>`;
-  }).join('');
+  const rows=archiveRows().filter(r=>arcFilter==='all'||r.type===arcFilter);
+  if(!rows.length){list.innerHTML=`<div class="empty">${arcFilter==='all'?t('noDays'):L('Nothing saved in this diary yet.','لسه مفيش حاجة محفوظة في المذكرة دي.')}</div>`;window.scrollTo(0,0);return;}
+  list.innerHTML=rows.map(r=>`<div class="arow" onclick="${r.open}">
+      <span class="aic">${r.icon}</span>
+      <div class="ad"><b>${prettyShort(r.key)}</b><small><span class="ty">${r.label}</span> · ${r.sub}</small></div>
+      ${r.pill?`<div class="pill">${r.pill}</div>`:''}</div>`).join('');
   window.scrollTo(0,0);
 }
-function openArchiveDay(k){view='day';document.getElementById('dayView').style.display='';
-  document.getElementById('homeView').style.display='none';setHeader('day');
-  document.getElementById('archiveView').style.display='none';
-  document.getElementById('dayBar').style.display='flex';
-  document.getElementById('archiveBar').style.display='none';
-  document.getElementById('title').textContent=t('appTitle');
-  curKey=k;load();window.scrollTo(0,0);}
+function setArcFilter(f){arcFilter=f;showArchive();}
+// One row per saved entry, newest first, across all three diaries.
+function archiveRows(){
+  const out=[];
+  Object.keys(localStorage).forEach(sk=>{
+    const m=/^(dbt_|dbtc_|dbtf_)(\d{4}-\d{2}-\d{2})$/.exec(sk);if(!m)return;
+    const k=m[2];let d;try{d=JSON.parse(localStorage.getItem(sk)||'{}');}catch(_){return;}
+    if(m[1]==='dbt_'){
+      const n=Object.values(d.skills||{}).filter(Boolean).length;
+      if(!n&&d.use==null&&!(d.notes||'').trim())return;
+      out.push({key:k,type:'skills',icon:'📓',label:L('Skills diary','مذكرة المهارات'),
+        sub:(LANG==='ar'?n+' مهارة':n+' skill'+(n===1?'':'s'))+' · '+(d.notes?t('hasNotes'):'—'),
+        pill:d.use!=null?d.use+'/7':'',open:`showDay('${k}')`});
+    }else if(m[1]==='dbtc_'){
+      const n=chkFilled(d);if(!n)return;
+      out.push({key:k,type:'check',icon:'📋',label:L('Daily check-in','المتابعة اليومية'),
+        sub:LANG==='ar'?n+' إجابة':n+' answer'+(n===1?'':'s'),
+        pill:d.skl!=null&&d.skl!==''?d.skl+'/5':'',open:`openCheck('${k}')`});
+    }else{
+      const txt=(d.text||'').trim();if(!txt)return;
+      out.push({key:k,type:'free',icon:'📝',label:L('Free writing','كتابة حرة'),
+        sub:esc(txt.replace(/\s+/g,' ').slice(0,46))+(txt.length>46?'…':''),
+        pill:'',open:`showFree('${k}')`});
+    }
+  });
+  const rank={skills:0,check:1,free:2};
+  return out.sort((a,b)=>a.key<b.key?1:a.key>b.key?-1:rank[a.type]-rank[b.type]);
+}
 
 /* ---------- summary + share ---------- */
 function summary(){
@@ -733,7 +822,7 @@ function summary(){
   if(state.notes&&state.notes.trim())out+='\n'+t('sumNotes')+state.notes.trim()+'\n';
   return out;
 }
-function share(how){const text=summary();
+function share(how){const text=view==='free'?freeSummary():summary();
   if(how==='wa'){const num=(cfg.wa||'').replace(/[^0-9]/g,'');
     location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(text);}
   else if(how==='email'){location.href='mailto:'+(cfg.email||'')+'?subject='+
@@ -759,7 +848,7 @@ function reminder(){
 
 /* ---------- backup / restore ---------- */
 function exportAll(){
-  const data={};Object.keys(localStorage).filter(k=>k.startsWith('dbt_')).forEach(k=>data[k]=localStorage.getItem(k));
+  const data={};Object.keys(localStorage).filter(k=>k.startsWith('dbt')).forEach(k=>data[k]=localStorage.getItem(k));
   dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'dbt-diary-backup-'+todayKey()+'.json');
   closeMenu();toast(t('backupDl'));
 }
@@ -767,8 +856,8 @@ function importAll(){closeMenu();document.getElementById('fileIn').click();}
 document.getElementById('fileIn').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const data=JSON.parse(r.result);
-    Object.keys(data).forEach(k=>{if(k.startsWith('dbt_'))localStorage.setItem(k,data[k]);});
-    toast(t('backupRestored'));showDay();}catch(_){toast(t('cantRead'));}};
+    Object.keys(data).forEach(k=>{if(k.startsWith('dbt'))localStorage.setItem(k,data[k]);});
+    toast(t('backupRestored'));showHome();}catch(_){toast(t('cantRead'));}};
   r.readAsText(f);e.target.value='';
 });
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
@@ -1799,6 +1888,262 @@ function oppoSummary(){const p=PRIMARY.find(x=>x[0]===oppo.emotion);const O=['�
   return O.join('\n');}
 function oppoToNotes(){state.notes=(state.notes&&state.notes.trim()?state.notes.trim()+'\n\n':'')+oppoSummary();save();render();toast(t('addedNotes'));closeOppo();}
 function oppoShare(){const num=(cfg.wa||'').replace(/[^0-9]/g,'');location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(oppoSummary());}
+
+/* ===================== Daily check-in =====================
+   The paper weekly card (DBT-PTSD) has ~20 rows × 7 days in one grid, which is a lot to face at once.
+   Same rows and same 0–5 scales here — just asked a few at a time, one day at a time. Nothing is required.
+   Stored per day under dbtc_YYYY-MM-DD. */
+const CHK_STEPS=[
+  {id:'wins',   ic:'🌱',en:'What went well',     ar:'اللي مشى كويس'},
+  {id:'therapy',ic:'💬',en:'Therapy',            ar:'العلاج'},
+  {id:'sleep',  ic:'😴',en:'Sleep',              ar:'النوم'},
+  {id:'intr',   ic:'⚡',en:'Intrusions',         ar:'الاقتحامات'},
+  {id:'old',    ic:'🌑',en:'The old path',       ar:'الطريق القديم'},
+  {id:'pb',     ic:'🔁',en:'Problem behaviours', ar:'السلوكيات المشكلة'},
+  {id:'new',    ic:'🌿',en:'The new path',       ar:'الطريق الجديد'},
+  {id:'sum',    ic:'📋',en:'Your check-in',      ar:'المتابعة بتاعتك'},
+];
+const CHK_FIELDS=['well','goal','conf','listened','homework','rec','hours','night','ifreq','idist',
+  'dissoc','blame','suic','pb1u','pb1a','pb2u','pb2a','skl','phys','pleas','goalb','fluid'];
+function chkFilled(d){return CHK_FIELDS.filter(f=>d[f]!=null&&d[f]!=='').length;}
+let chk={},chkKey=null,chkStep=0;
+const att=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+function openCheck(k){closeMenu();closeTools();
+  chkKey=k||defaultKey();chk=JSON.parse(localStorage.getItem('dbtc_'+chkKey)||'{}');chkStep=0;
+  document.getElementById('chk').classList.add('show');renderChk();}
+function closeCheck(){document.getElementById('chk').classList.remove('show');showHome();}
+function chkSave(){localStorage.setItem('dbtc_'+chkKey,JSON.stringify(chk));}
+function chkTxt(f,v){chk[f]=v;chkSave();}
+function chkSetDay(v){if(!v)return;chkKey=v;chk=JSON.parse(localStorage.getItem('dbtc_'+chkKey)||'{}');renderChk();}
+// Tap a value to set it, tap it again to clear — every row is optional.
+function chkPick(btn,f,v){
+  chk[f]=(chk[f]===v?null:v);chkSave();
+  [...btn.parentNode.children].forEach(b=>b.classList.toggle('on',String(chk[f])===b.dataset.v));
+  if(f==='suic'){const a=document.getElementById('suicAlert');if(a)a.style.display=chk.suic>=3?'':'none';}
+}
+function chkGo(d){const n=chkStep+d;
+  if(n<0||n>=CHK_STEPS.length)return closeCheck();
+  chkStep=n;renderChk();document.getElementById('chkBody').scrollTop=0;}
+function chkJump(i){chkStep=i;renderChk();document.getElementById('chkBody').scrollTop=0;}
+
+function qb(label,hint,inner){return `<div class="qblock"><p class="ql">${label}</p>`+
+  (hint?`<p class="qh">${hint}</p>`:'')+inner+`</div>`;}
+function chkScale(f,lo,hi,tone){
+  let h=`<div class="sc${tone?' '+tone:''}">`;
+  for(let i=0;i<=5;i++){
+    // on a "warm" row 0 means none/fine — only light up red once it's actually high
+    const cls=(tone==='warm'?(i===0?'lo ':i>=3?'hi ':''):'')+(chk[f]===i?'on':'');
+    h+=`<button data-v="${i}" class="${cls}" onclick="chkPick(this,'${f}',${i})">${i}</button>`;
+  }
+  return h+`</div><div class="scends"><span>0 · ${lo}</span><span>5 · ${hi}</span></div>`;
+}
+function chkYN(f){return `<div class="ynrow">`+
+  `<button data-v="true" class="y ${chk[f]===true?'on':''}" onclick="chkPick(this,'${f}',true)">${L('Yes','أيوه')}</button>`+
+  `<button data-v="false" class="n ${chk[f]===false?'on':''}" onclick="chkPick(this,'${f}',false)">${L('No','لأ')}</button></div>`;}
+// dir=auto so a bilingual writer gets the right alignment per entry, whichever language they type in
+function chkText(f,ph){return `<textarea dir="auto" placeholder="${att(ph)}" oninput="chkTxt('${f}',this.value)">${esc(chk[f])}</textarea>`;}
+function chkNum(f,unit,ph){return `<div class="numrow"><input type="number" inputmode="decimal" min="0" step="any" `+
+  `placeholder="${att(ph||'')}" value="${att(chk[f])}" oninput="chkTxt('${f}',this.value)" />`+
+  (unit?`<span class="unit">${unit}</span>`:'')+`</div>`;}
+function pbName(i){return cfg['pb'+i]||'';}
+function pbSet(i,v){cfg['pb'+i]=v;localStorage.setItem('dbt_cfg',JSON.stringify(cfg));}
+
+function renderChk(){
+  const s=CHK_STEPS[chkStep],b=document.getElementById('chkBody');
+  document.getElementById('chkTitle').textContent=L('Daily check-in','المتابعة اليومية');
+  document.getElementById('chkProg').style.width=((chkStep+1)/CHK_STEPS.length*100)+'%';
+  const skip=`<p class="skipnote">${L('Leave anything blank — skipping a question is fine.','سيب أي حاجة فاضية — عادي تعدّي أي سؤال.')}</p>`;
+  const navMid=`<div class="navin"><button class="back" onclick="chkGo(-1)">${L('Back','رجوع')}</button>`+
+    `<button class="next" onclick="chkGo(1)">${L('Next','التالي')} ${LANG==='ar'?'◂':'▸'}</button></div>`;
+  let h=`<p class="step-q">${s.ic} ${L(s.en,s.ar)}</p>`;
+
+  if(s.id==='wins'){
+    h=`<div class="chkday"><b>${pretty(chkKey)}</b><input type="date" value="${chkKey}" max="${todayKey()}" onchange="chkSetDay(this.value)" /></div>`+h
+      +qb(L('What went well today?','إيه اللي مشى كويس النهارده؟'),
+          L('Anything at all — small counts.','أي حاجة — حتى لو صغيرة.'),
+          chkText('well',L('One thing that went well…','حاجة واحدة مشيت كويس…')))
+      +qb(L('What did you do today toward an important goal?','عملت إيه النهارده ناحية هدف مهم؟'),'',
+          chkText('goal',L('Even one small step…','حتى خطوة صغيرة…')))+skip;
+  }
+  else if(s.id==='therapy'){
+    h+=qb(L('Confidence in therapy','الثقة في العلاج'),'',
+        chkScale('conf',L('not at all','خالص'),L('very strong','قوية جدًا'),'good'))
+      +qb(L('Listened to the recorded session?','سمعت تسجيل الجلسة؟'),'',chkYN('listened'))
+      +qb(L('Completed therapy homework?','عملت واجب العلاج؟'),'',chkYN('homework'))+skip;
+  }
+  else if(s.id==='sleep'){
+    h+=qb(L('How recovered did you feel on waking?','قمت حاسس إنك استعدت نشاطك قد إيه؟'),
+        L('Same scale as the paper card: 0 = very well recovered, 5 = not at all.','نفس مقياس الكارت الورقي: ٠ = مستعيد نشاطك تمامًا، ٥ = خالص لأ.'),
+        chkScale('rec',L('very well','تمامًا'),L('not at all','خالص'),'warm'))
+      +qb(L('Hours slept','ساعات النوم'),'',chkNum('hours',L('hours','ساعة'),'0'))
+      +qb(L('Nightmares','كوابيس'),L('How many?','كام واحد؟'),chkNum('night',L('nightmares','كابوس'),'0'))+skip;
+  }
+  else if(s.id==='intr'){
+    h+=qb(L('Intrusions — how often today?','الاقتحامات — كام مرة النهارده؟'),
+        L('Flashbacks, intrusive memories or images.','فلاش باك، ذكريات أو صور اقتحامية.'),
+        chkNum('ifreq',L('times','مرة'),'0'))
+      +qb(L('How distressing were they?','كانت مضايقاك قد إيه؟'),'',
+        chkScale('idist',L('not at all','خالص'),L('very strong','قوي جدًا'),'warm'))
+      +qb(L('Dissociative symptoms','أعراض الانفصال'),
+        L('Feeling unreal, far away, numb, or losing time.','إحساس إن الدنيا مش حقيقية، أو إنك بعيد، أو تخدير، أو ضياع وقت.'),
+        chkScale('dissoc',L('not at all','خالص'),L('very strong','قوي جدًا'),'warm'))+skip;
+  }
+  else if(s.id==='old'){
+    h+=qb(L('Self-blaming','لوم النفس'),'',
+        chkScale('blame',L('not at all','خالص'),L('very strong','قوي جدًا'),'warm'))
+      +qb(L('Suicidal thoughts','أفكار انتحارية'),
+        L('0 = none · 5 = no control any more.','٠ = ولا حاجة · ٥ = مفيش تحكم خالص.'),
+        chkScale('suic',L('none','ولا حاجة'),L('no control','مفيش تحكم'),'warm'))
+      +`<div class="alert" id="suicAlert" style="display:${chk.suic>=3?'':'none'}">
+          <h3>${L('You don’t have to sit with this alone','مش لازم تقعد مع ده لوحدك')}</h3>
+          <p style="margin:0 0 10px;font-size:14px;line-height:1.55">${L('Write it here so your therapist sees it — and if the urge is strong right now, use a crisis skill or reach out to someone you trust.','اكتبها هنا عشان المعالج يشوفها — ولو الرغبة قوية دلوقتي، استخدم مهارة أزمة أو كلّم حد بتثق فيه.')}</p>
+          <button class="canttell" onclick="closeCheck();openHelp()">${L('🆘 Open “I need help”','🆘 افتح «محتاج مساعدة»')}</button>
+        </div>`+skip;
+  }
+  else if(s.id==='pb'){
+    h+=`<p class="step-h">${L('The two behaviours you and your therapist are tracking. Name them once — they’ll stay here.','السلوكين اللي إنت والمعالج بتتابعوهم. سمّيهم مرة واحدة — وهيفضلوا هنا.')}</p>`;
+    [1,2].forEach(i=>{
+      h+=`<div class="qblock">
+        <input class="pbname" dir="auto" placeholder="${att(L('Problem behaviour '+i+' (name it)','سلوك مشكلة '+i+' (سمّيه)'))}" value="${att(pbName(i))}" oninput="pbSet(${i},this.value)" />
+        <p class="qh">${L('Urge — how strong today?','الرغبة — قوية قد إيه النهارده؟')}</p>
+        ${chkScale('pb'+i+'u',L('none','ولا حاجة'),L('very strong','قوية جدًا'),'warm')}
+        <p class="qh" style="margin-top:14px">${L('What did you actually do?','عملت إيه فعلًا؟')}</p>
+        ${chkText('pb'+i+'a',L('e.g. didn’t act on it, used a skill instead…','مثلًا: متصرفتش عليها، استخدمت مهارة بدالها…'))}
+      </div>`;});
+    h+=skip;
+  }
+  else if(s.id==='new'){
+    h+=qb(L('Usage of skills','استخدام المهارات'),
+        L('Want to tick exactly which ones? That’s the Skills diary.','عايز تعلّم أنهي مهارات بالظبط؟ دي مذكرة المهارات.'),
+        chkScale('skl',L('not at all','خالص'),L('used a lot','كتير'),'good'))
+      +qb(L('Physical activity','النشاط البدني'),'',
+        chkScale('phys',L('not at all','خالص'),L('excessively','بشكل زايد'),'good'))
+      +qb(L('Pleasurable activities','أنشطة ممتعة'),'',
+        chkScale('pleas',L('none at all','ولا حاجة'),L('many','كتير'),'good'))
+      +qb(L('Goal-oriented behaviour','سلوك موجّه للهدف'),L('Anything else that moved you forward.','أي حاجة تانية حرّكتك لقدام.'),
+        chkText('goalb',L('Note it here…','اكتبها هنا…')))
+      +qb(L('Fluid consumed','السوايل'),'',chkNum('fluid',L('liters','لتر'),'0'))+skip;
+  }
+  else{
+    const n=chkFilled(chk);
+    h+=`<p class="step-h">${n?L('Here’s your day. Send it, or go back and add more.','ده يومك. ابعته، أو ارجع وضيف أكتر.')
+       :L('Nothing filled in yet — go back and answer whatever you can.','لسه مفيش حاجة متملية — ارجع وجاوب اللي تقدر عليه.')}</p>
+      <div class="sumbox">${esc(chkSummary(chkKey))}</div>
+      <button class="ctfopen" style="background:#25d366;color:#04331a" onclick="chkShare('wa')">${L('📲 Send today to my therapist','📲 ابعت اليوم للمعالج')}</button>
+      <button class="canttell" onclick="chkShare('week',1)">${L('🗓️ Send the whole week (WhatsApp)','🗓️ ابعت الأسبوع كله (واتساب)')}</button>
+      <button class="canttell" style="margin-top:8px" onclick="chkShare('email')">${L('✉️ Email it','✉️ ابعتها بالإيميل')}</button>
+      <button class="canttell" style="margin-top:8px" onclick="chkShare('copy')">${L('📋 Copy as text','📋 انسخها كنص')}</button>
+      <div class="lhead">${L('Jump back to','ارجع لـ')}</div>`
+      +CHK_STEPS.slice(0,-1).map((x,i)=>`<button class="sumjump" onclick="chkJump(${i})">${x.ic} ${L(x.en,x.ar)}</button>`).join('');
+    document.getElementById('chkNav').innerHTML=`<div class="navin"><button class="back" onclick="chkGo(-1)">${L('Back','رجوع')}</button><button class="next" onclick="closeCheck()">${L('Done','تمام')}</button></div>`;
+    b.innerHTML=h;return;
+  }
+  b.innerHTML=h;
+  document.getElementById('chkNav').innerHTML=navMid;
+}
+
+function chkSummary(k,d){
+  d=d||chk;const has=f=>d[f]!=null&&d[f]!=='';
+  const O=['📋 '+L('Daily check-in','المتابعة اليومية')+' — '+pretty(k),''];
+  if(has('well'))O.push('🌱 '+L('Went well','مشى كويس')+': '+String(d.well).trim());
+  if(has('goal'))O.push('🎯 '+L('Toward my goal','ناحية هدفي')+': '+String(d.goal).trim());
+  if(has('conf'))O.push('💬 '+L('Confidence in therapy','الثقة في العلاج')+': '+d.conf+'/5');
+  const sl=[];
+  if(has('hours'))sl.push(d.hours+' '+L('h','ساعة'));
+  if(has('rec'))sl.push(L('recovery','استعادة النشاط')+' '+d.rec+'/5');
+  if(has('night'))sl.push(L('nightmares','كوابيس')+' '+d.night);
+  if(sl.length)O.push('😴 '+L('Sleep','النوم')+': '+sl.join(' · '));
+  const it=[];
+  if(has('ifreq'))it.push(d.ifreq+'×');
+  if(has('idist'))it.push(L('distress','الضيق')+' '+d.idist+'/5');
+  if(it.length)O.push('⚡ '+L('Intrusions','اقتحامات')+': '+it.join(' · '));
+  if(has('dissoc'))O.push('🌫️ '+L('Dissociation','انفصال')+': '+d.dissoc+'/5');
+  if(has('blame'))O.push('🪞 '+L('Self-blame','لوم النفس')+': '+d.blame+'/5');
+  if(has('suic'))O.push('🆘 '+L('Suicidal thoughts','أفكار انتحارية')+': '+d.suic+'/5');
+  [1,2].forEach(i=>{
+    const u='pb'+i+'u',a='pb'+i+'a';if(!has(u)&&!has(a))return;
+    const p=[];
+    if(has(u))p.push(L('urge','الرغبة')+' '+d[u]+'/5');
+    if(has(a))p.push(String(d[a]).trim());
+    O.push('🔁 '+(pbName(i)||L('Problem behaviour','سلوك مشكلة')+' '+i)+': '+p.join(' · '));});
+  const np=[];
+  if(has('skl'))np.push(L('skills','المهارات')+' '+d.skl+'/5');
+  if(has('phys'))np.push(L('physical activity','نشاط بدني')+' '+d.phys+'/5');
+  if(has('pleas'))np.push(L('pleasant activities','أنشطة ممتعة')+' '+d.pleas+'/5');
+  if(has('fluid'))np.push(L('fluids','سوايل')+' '+d.fluid+' '+L('L','لتر'));
+  if(np.length)O.push('🌿 '+L('New path','الطريق الجديد')+': '+np.join(' · '));
+  if(has('goalb'))O.push('🎯 '+L('Goal-oriented','سلوك موجّه للهدف')+': '+String(d.goalb).trim());
+  const th=[];
+  if(d.listened!=null)th.push(L('session recording','تسجيل الجلسة')+' '+(d.listened?L('yes','أيوه'):L('no','لأ')));
+  if(d.homework!=null)th.push(L('homework','الواجب')+' '+(d.homework?L('yes','أيوه'):L('no','لأ')));
+  if(th.length)O.push('📚 '+th.join(' · '));
+  if(O.length<=2)O.push(L('(Nothing filled in yet)','(لسه مفيش حاجة متكتبة)'));
+  return O.join('\n');
+}
+// The paper card is weekly — this rebuilds that view as one compact message.
+function chkWeek(){
+  const out=['📋 '+L('Daily check-in — week','المتابعة اليومية — أسبوع')+' '+prettyShort(shiftKey(chkKey,-6))+' → '+prettyShort(chkKey),''];
+  let any=false;
+  for(let i=6;i>=0;i--){
+    const k=shiftKey(chkKey,-i);const d=JSON.parse(localStorage.getItem('dbtc_'+k)||'{}');
+    if(!chkFilled(d))continue;any=true;
+    const p=[],g=(f,lab,suf)=>{if(d[f]!=null&&d[f]!=='')p.push(lab+' '+d[f]+(suf||''));};
+    g('hours',L('sleep','نوم'),L('h','س'));g('rec',L('recovery','استعادة'),'/5');g('night',L('nightmares','كوابيس'));
+    g('ifreq',L('intrusions','اقتحامات'));g('idist',L('distress','ضيق'),'/5');
+    g('dissoc',L('dissoc.','انفصال'),'/5');g('blame',L('self-blame','لوم'),'/5');g('suic',L('suicidal','انتحارية'),'/5');
+    g('pb1u',pbName(1)||L('urge 1','رغبة ١'),'/5');g('pb2u',pbName(2)||L('urge 2','رغبة ٢'),'/5');
+    g('skl',L('skills','مهارات'),'/5');g('phys',L('activity','نشاط'),'/5');g('pleas',L('pleasant','ممتع'),'/5');
+    out.push('• '+prettyShort(k)+' — '+(p.join(' · ')||'—'));
+  }
+  if(!any)out.push(L('(No days filled in this week)','(مفيش أيام متملية في الأسبوع ده)'));
+  return out.join('\n');
+}
+function chkShare(how,week){
+  const text=week?chkWeek():chkSummary(chkKey);
+  if(how==='email')location.href='mailto:'+(cfg.email||'')+'?subject='+
+    encodeURIComponent(t('emailSubject')+pretty(chkKey))+'&body='+encodeURIComponent(text);
+  else if(how==='copy')navigator.clipboard.writeText(text).then(()=>toast(t('copied')));
+  else{const num=(cfg.wa||'').replace(/[^0-9]/g,'');
+    location.href=(num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(text);}
+}
+
+/* ===================== Free writing =====================
+   No boxes, no scales — one page per day, stored under dbtf_YYYY-MM-DD. */
+const FPROMPTS=[
+  ['What’s on my mind right now…','اللي في دماغي دلوقتي…'],
+  ['What I’m feeling, and where I feel it…','اللي حاسّه، وفين حاسه في جسمي…'],
+  ['What was hard today…','اللي كان صعب النهارده…'],
+  ['What I’m grateful for…','اللي أنا ممتن ليه…'],
+  ['What I need right now…','اللي محتاجه دلوقتي…'],
+];
+let fstate={};
+function showFree(k){if(location.hash)history.replaceState(null,'','./');
+  showView('free');
+  document.getElementById('title').textContent=L('Free writing','كتابة حرة');
+  curKey=k||defaultKey();loadFree();window.scrollTo(0,0);}
+function loadFree(){fstate=JSON.parse(localStorage.getItem('dbtf_'+curKey)||'{}');renderFree();}
+function saveFree(){localStorage.setItem('dbtf_'+curKey,JSON.stringify(fstate));}
+function renderFree(){
+  const rel=curKey===todayKey()?t('today'):curKey===defaultKey()?t('yesterday'):'';
+  document.getElementById('dateLine').textContent=rel+pretty(curKey);
+  const ta=document.getElementById('freeText');
+  ta.placeholder=L('Write whatever you want. Nobody sees this unless you send it.','اكتب اللي إنت عايزه. محدش هيشوفه غير لما تبعته.');
+  if(document.activeElement!==ta)ta.value=fstate.text||'';
+  document.getElementById('freePrompts').innerHTML=FPROMPTS.map((p,i)=>
+    `<button onclick="freePrompt(${i})">${L(p[0],p[1])}</button>`).join('');
+  document.getElementById('stampBtn').textContent='🕐 '+L('Add a time stamp','ضيف وقت');
+}
+function freeAppend(line){
+  const ta=document.getElementById('freeText'),cur=(fstate.text||'').replace(/\s+$/,'');
+  fstate.text=(cur?cur+'\n\n':'')+line+'\n';saveFree();
+  ta.value=fstate.text;ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
+}
+function freePrompt(i){freeAppend(L(FPROMPTS[i][0],FPROMPTS[i][1]));}
+function stampTime(){freeAppend('— '+new Date().toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit'})+' —');}
+document.getElementById('freeText').addEventListener('input',e=>{fstate.text=e.target.value;saveFree();});
+function freeSummary(){return '📝 '+L('Diary','مذكرة')+' — '+pretty(curKey)+'\n\n'+
+  ((fstate.text||'').trim()||L('(empty)','(فاضية)'));}
 
 curKey=defaultKey();load();view='home';applyLang();gate();
 if(location.hash==='#archive')showArchive();
